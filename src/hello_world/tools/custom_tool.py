@@ -1,0 +1,24 @@
+from typing import Any
+from langchain.tools import BaseTool
+
+class CustomTool(BaseTool):
+    """A custom tool template that can be extended for specific use cases."""
+    
+    name = "custom_tool"
+    description = "A custom tool that can be implemented for specific tasks"
+
+    def _run(self, query: str) -> Any:
+        """Use the tool.
+        
+        Args:
+            query: The input query to process
+            
+        Returns:
+            The result of the tool execution
+        """
+        # Implement your custom tool logic here
+        raise NotImplementedError("Custom tool not implemented yet")
+
+    async def _arun(self, query: str) -> Any:
+        """Use the tool asynchronously."""
+        raise NotImplementedError("Async version not implemented")

@@ -1,0 +1,9 @@
+research_task:
+  description: Research the given topic thoroughly
+  expected_output: Detailed analysis of the topic
+  agent: researcher
+
+execution_task:
+  description: Execute actions based on research findings
+  expected_output: Implementation report
+  agent: executor
