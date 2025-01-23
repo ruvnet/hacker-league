@@ -90,9 +90,21 @@ toggle_setting() {
 # Chat with AI using HelloWorldCrew
 chat_with_ai() {
     local prompt=$1
+    local task_type=${2:-"both"}
     
-    # Run the HelloWorldCrew agent with the prompt
-    cd /workspaces/hacker-league-jan23 && poetry run python -m hello_world.main --prompt "$prompt" --task both
+    echo -e "\n${CYAN}╔══════════════════════════════════════════════════════════════════╗"
+    echo -e "║                   NEURAL CORE ACTIVATION                        ║"
+    echo -e "╚══════════════════════════════════════════════════════════════════╝${NC}\n"
+    
+    # Run the HelloWorldCrew agent with the prompt and task type
+    cd /workspaces/hacker-league-jan23 && poetry run python src/hello_world/main.py --prompt "$prompt" --task "$task_type"
+    
+    local exit_code=$?
+    if [ $exit_code -eq 0 ]; then
+        echo -e "\n${GREEN}Neural processing completed successfully.${NC}"
+    else
+        echo -e "\n${RED}Neural processing encountered an error (Exit code: $exit_code).${NC}"
+    fi
 }
 
 # Setup OpenRouter API Key
@@ -602,22 +614,25 @@ chat_menu() {
             1)
                 echo -e "\n${CYAN}What setting would you like help with?${NC} "
                 read -r query
-                chat_with_ai "Help me understand and configure this aider setting: $query"
-                echo -e "\n${CYAN}Press Enter to continue...${NC}"
+                clear
+                chat_with_ai "Help me understand and configure this aider setting: $query" "research"
+                echo -e "\n${CYAN}Press Enter to return to menu...${NC}"
                 read -r
                 ;;
             2)
                 echo -e "\n${CYAN}What type of development workflow are you interested in?${NC} "
                 read -r workflow
-                chat_with_ai "Guide me through setting up aider for $workflow development workflow. Include specific settings and best practices."
-                echo -e "\n${CYAN}Press Enter to continue...${NC}"
+                clear
+                chat_with_ai "Guide me through setting up aider for $workflow development workflow. Include specific settings and best practices." "both"
+                echo -e "\n${CYAN}Press Enter to return to menu...${NC}"
                 read -r
                 ;;
             3)
                 echo -e "\n${CYAN}What type of project are you working on?${NC} "
                 read -r project
-                chat_with_ai "Recommend optimal aider settings for a $project project. Include explanations for each recommendation."
-                echo -e "\n${CYAN}Press Enter to continue...${NC}"
+                clear
+                chat_with_ai "Recommend optimal aider settings for a $project project. Include explanations for each recommendation." "research"
+                echo -e "\n${CYAN}Press Enter to return to menu...${NC}"
                 read -r
                 ;;
             4)
