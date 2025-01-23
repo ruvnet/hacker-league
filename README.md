@@ -35,8 +35,10 @@ This repository showcases a project created during one of our live sessions, dem
 
 ---
 
-# AI Agent Development Tutorial
-A comprehensive guide to building and customizing AI agents using CrewAI, LangChain/LangGraph, and Aider.
+# 🤖 Building AI Agents: From Zero to Hero
+## A Comprehensive Tutorial on AI Agent Development
+
+*Learn to build, customize, and deploy intelligent AI agents using CrewAI, LangChain/LangGraph, and Aider*
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -126,6 +128,95 @@ poetry run python src/hello_world/main.py --prompt "Your prompt here" --task res
 **Arguments:**
 - `--prompt`: Specify the prompt/question for the AI system. *(Default: "Tell me about yourself")*
 - `--task`: Define the type of task to perform. *(Options: research, execute, both; Default: both)*
+
+## Configuration Management
+
+The project includes a powerful configuration management script (`coding-admin.sh`) that provides an interactive interface for customizing and managing your AI development environment.
+
+### Running the Configuration Manager
+
+```bash
+./coding-admin.sh
+```
+
+### Key Features
+
+1. **AI Chat Assistant**
+   - Get help with settings configuration
+   - Development workflow guidance
+   - Configuration recommendations
+   - Chat settings management
+
+2. **Model Settings**
+   - Configure main model (GPT-4, Claude-3, etc.)
+   - Set editor model preferences
+   - Manage model aliases
+   - Configure SSL and API settings
+
+3. **Git Integration**
+   - Toggle auto-commits
+   - Configure commit messages
+   - Set repository preferences
+   - Manage author attribution
+
+4. **Output Customization**
+   - Toggle dark/light mode
+   - Configure color schemes
+   - Set code themes
+   - Manage diff display
+
+5. **History Management**
+   - Configure input/chat history
+   - Set history file locations
+   - Manage chat history restoration
+
+6. **Development Tools**
+   - Configure linting settings
+   - Set up testing preferences
+   - Manage environment variables
+   - Configure shell commands
+
+7. **Performance Settings**
+   - Configure cache settings
+   - Manage map settings
+   - Set up analytics preferences
+
+8. **OpenRouter Integration**
+   - Configure API keys
+   - Set up model preferences
+   - Manage development workflows
+
+### Configuration Files
+
+The script manages several configuration files:
+- `.aider.conf.yml`: Main configuration file
+- `openrouter_config.yml`: OpenRouter-specific settings
+- `.env`: Environment variables and API keys
+
+### Common Configuration Tasks
+
+1. **Setting Up OpenRouter**
+```bash
+./coding-admin.sh
+# Select option 2 (OpenRouter Settings)
+# Follow prompts to enter your API key
+```
+
+2. **Configuring Model Settings**
+```bash
+./coding-admin.sh
+# Select option 4 (Model Settings)
+# Choose your preferred model and settings
+```
+
+3. **Customizing Output**
+```bash
+./coding-admin.sh
+# Select option 6 (Output Settings)
+# Configure themes and display preferences
+```
+
+The configuration manager provides an intuitive interface for managing all aspects of your AI development environment. Use the interactive menus to explore and customize settings according to your needs.
 
 ## Understanding the Components
 
