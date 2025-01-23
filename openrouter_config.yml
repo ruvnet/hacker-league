@@ -1,0 +1,6 @@
+# OpenRouter Configuration
+models:
+  development:
+    tdd: []
+    swarm: []
+    agile: []
