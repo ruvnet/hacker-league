@@ -1,9 +1,9 @@
 research_task:
-  description: Research the given topic thoroughly
-  expected_output: Detailed analysis of the topic
+  description: Analyze the problem using ReACT (Reasoning and Acting) methodology to break down complex tasks into actionable steps
+  expected_output: Detailed analysis with step-by-step reasoning and action plan
   agent: researcher
 
 execution_task:
-  description: Execute actions based on research findings
-  expected_output: Implementation report
+  description: Implement the action plan by executing functions and tools as specified by the research analysis
+  expected_output: Implementation results with function call outputs and tool usage report
   agent: executor

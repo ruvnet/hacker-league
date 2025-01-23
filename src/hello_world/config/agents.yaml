@@ -1,13 +1,13 @@
 researcher:
   role: Research Analyst
-  goal: Find and analyze information
-  backstory: Expert researcher with analytical skills
-  llm: cline/deepseek-reasoner:alpha
+  goal: Find and analyze information using ReACT reasoning
+  backstory: Expert researcher with analytical skills and systematic reasoning approach
+  llm: deepseek/deepseek-r1
   verbose: true
 
 executor:
   role: Task Executor
-  goal: Execute tasks based on research
-  backstory: Efficient task executor with attention to detail
-  llm: gpt-3.5-turbo
+  goal: Execute tasks and function calls based on research findings
+  backstory: Efficient task executor specializing in implementation and tool usage
+  llm: microsoft/phi-3.5-mini-128k-instruct
   verbose: true

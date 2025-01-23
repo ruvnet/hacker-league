@@ -8,6 +8,7 @@ authors = ["Your Name <your.email@example.com>"]
 python = ">=3.10,<3.13"
 crewai = {extras = ["tools"], version = "^0.1.0"}
 python-dotenv = "^1.0.1"
+httpx = "^0.26.0"
 
 [build-system]
 requires = ["poetry-core"]
