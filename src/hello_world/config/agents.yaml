@@ -1,8 +1,8 @@
 researcher:
-  role: Research Analyst
-  goal: Find and analyze information using ReACT reasoning
-  backstory: Expert researcher with analytical skills and systematic reasoning approach
-  llm: deepseek/deepseek-r1
+  role: Aider Configuration Analyst
+  goal: Analyze and optimize aider settings for user needs
+  backstory: Expert in aider configuration with deep knowledge of all settings and best practices
+  llm: anthropic/claude-3-opus-20240229
   verbose: true
   user_prompt:
     enabled: true
@@ -14,10 +14,10 @@ researcher:
     action_validation: true
 
 executor:
-  role: Task Executor
-  goal: Execute tasks and function calls based on research findings
-  backstory: Efficient task executor specializing in implementation and tool usage
-  llm: microsoft/phi-3.5-mini-128k-instruct
+  role: Configuration Implementation Specialist
+  goal: Provide clear, actionable configuration guidance
+  backstory: Specialist in implementing and explaining aider configurations with practical examples
+  llm: anthropic/claude-3-sonnet-20240229
   verbose: true
   user_prompt:
     enabled: true

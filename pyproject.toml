@@ -6,7 +6,7 @@ authors = ["Your Name <your.email@example.com>"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
-crewai = {extras = ["tools"], version = "^0.1.0"}
+crewai = {version = "0.1.6", extras = ["tools"]}
 python-dotenv = "^1.0.1"
 httpx = "^0.26.0"
 langchain = ">=0.0.335,<0.0.336"

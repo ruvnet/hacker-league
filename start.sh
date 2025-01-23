@@ -21,10 +21,42 @@ ${MAGENTA}▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀�
 ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀${NC}
 
 ${YELLOW}[1]${NC} 📦 INSTALL NEURAL DEPENDENCIES
-${YELLOW}[2]${NC} 🚀 ACTIVATE AI CORES
-${YELLOW}[3]${NC} 💤 ENTER SLEEP MODE
+${YELLOW}[2]${NC} 🚀 ACTIVATE AI CORES (DEFAULT MODE)
+${YELLOW}[3]${NC} 🎯 ACTIVATE AI CORES (CUSTOM MODE)
+${YELLOW}[4]${NC} 💤 ENTER SLEEP MODE
 
 ${CYAN}▮${NC} Enter command: """
+}
+
+# Function to get custom parameters
+get_custom_params() {
+    echo -e """
+${CYAN}╔══════════════════════════════════════════════════════════════════╗
+║                   NEURAL PARAMETER CONFIG                       ║
+╚══════════════════════════════════════════════════════════════════╝${NC}
+"""
+    echo -e "${YELLOW}[SYS]${NC} Enter your prompt (or press Enter for default): "
+    read custom_prompt
+    echo -e "${YELLOW}[SYS]${NC} Select task type:
+${YELLOW}[1]${NC} research
+${YELLOW}[2]${NC} execute
+${YELLOW}[3]${NC} both (default)
+${CYAN}▮${NC} Enter choice: "
+    read task_choice
+    
+    case $task_choice in
+        1) task_type="research";;
+        2) task_type="execute";;
+        *) task_type="both";;
+    esac
+
+    if [ -z "$custom_prompt" ]; then
+        PROMPT_ARG=""
+    else
+        PROMPT_ARG="--prompt \"$custom_prompt\""
+    fi
+    
+    TASK_ARG="--task $task_type"
 }
 
 # Function to install dependencies
@@ -61,6 +93,14 @@ ${RED}╔═══════════════════════�
 
 # Function to run the agent
 run_agent() {
+    local mode=$1
+    if [ "$mode" = "custom" ]; then
+        get_custom_params
+    else
+        PROMPT_ARG=""
+        TASK_ARG=""
+    fi
+
     echo -e """
 ${CYAN}╔══════════════════════════════════════════════════════════════════╗
 ║                   NEURAL CORE ACTIVATION                        ║
@@ -73,7 +113,7 @@ ${MAGENTA}▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀�
 ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀${NC}
 
 ${YELLOW}[SYS]${NC} Press ${RED}Ctrl+C${NC} to initiate emergency shutdown\n"""
-    if poetry run python src/hello_world/main.py; then
+    if eval "poetry run python src/hello_world/main.py $PROMPT_ARG $TASK_ARG"; then
         echo -e """
 ${GREEN}╔══════════════════════════════════════════════════════════════════╗
 ║             🎯 MISSION COMPLETED SUCCESSFULLY 🎯                ║
@@ -98,9 +138,12 @@ while true; do
             install_dependencies
             ;;
         2)
-            run_agent
+            run_agent "default"
             ;;
         3)
+            run_agent "custom"
+            ;;
+        4)
             echo -e """
 ${CYAN}╔══════════════════════════════════════════════════════════════════╗
 ║                    ENTERING SLEEP MODE                          ║

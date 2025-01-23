@@ -87,65 +87,12 @@ toggle_setting() {
     fi
 }
 
-# Chat with AI using OpenRouter
+# Chat with AI using HelloWorldCrew
 chat_with_ai() {
     local prompt=$1
-    local api_key=$(grep "OPENROUTER_API_KEY" "$ENV_FILE" | cut -d '=' -f2 | tr -d '"' | tr -d "'" | tr -d ' ')
-    local model=$(get_setting "chat_model")
-    local system_prompt=$(get_setting "chat_system_prompt")
     
-    if [ -z "$api_key" ]; then
-        echo -e "${RED}Error: OPENROUTER_API_KEY not found in .env file${NC}"
-        setup_openrouter_key
-        return 1
-    fi
-
-    if [ -z "$model" ]; then
-        model="anthropic/claude-3-opus"
-    fi
-
-    # Prepare messages array with system prompt if available
-    local messages='[{"role": "user", "content": "'"$prompt"'"}'
-    if [ ! -z "$system_prompt" ]; then
-        messages='[{"role": "system", "content": "'"$system_prompt"'"}, '"$messages"']'
-    else
-        messages='['"$messages"']'
-    fi
-
-    # Use curl to stream the response
-    curl -N -s https://openrouter.ai/api/v1/chat/completions \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $api_key" \
-        -H "HTTP-Referer: https://github.com/ruvnet" \
-        -H "X-Title: Aider Configuration Assistant" \
-        -d '{
-            "model": "'"$model"'",
-            "messages": '"$messages"',
-            "stream": true,
-            "temperature": 0.7,
-            "max_tokens": 4000
-        }' | while IFS= read -r line; do
-            # Skip empty lines
-            [ -z "$line" ] && continue
-            
-            # Remove "data: " prefix if present
-            line=${line#data: }
-            
-            # Skip [DONE] message
-            [[ "$line" == "[DONE]" ]] && continue
-            
-            # Try to extract content from the JSON response
-            if [[ $line == *"content"* ]]; then
-                # Extract content between quotes after "content":
-                content=$(echo "$line" | sed -n 's/.*"content":"\([^"]*\)".*/\1/p')
-                if [ ! -z "$content" ]; then
-                    # Unescape any escaped characters
-                    content=$(echo -e "$content")
-                    echo -ne "${CYAN}$content${NC}"
-                fi
-            fi
-        done
-    echo -e "\n"
+    # Run the HelloWorldCrew agent with the prompt
+    cd /workspaces/hacker-league-jan23 && poetry run python -m hello_world.main --prompt "$prompt" --task both
 }
 
 # Setup OpenRouter API Key
@@ -712,8 +659,58 @@ chat_settings_menu() {
                 setup_openrouter_key
                 ;;
             3)
-                echo -e "\n${CYAN}Enter system prompt:${NC} "
+                echo -e "\n${CYAN}Enter system prompt (default: You are a helpful AI assistant focused on research and task execution using ReACT methodology):${NC} "
                 read -r prompt
+                if [ -z "$prompt" ]; then
+                    prompt="You are an AI assistant specialized in helping users configure and use aider effectively. You have comprehensive knowledge of aider's settings and capabilities:
+
+CORE CAPABILITIES:
+1. Model Selection: Help users choose between models (GPT-4, Claude-3, etc.) based on their needs
+2. Git Integration: Guide git-related settings for version control
+3. Editor Integration: Configure editor preferences and formats
+4. Output Customization: Help with color schemes, themes, and display options
+5. Performance Optimization: Advise on caching, history, and token management
+
+KEY SETTINGS CATEGORIES:
+1. Main Model Settings:
+   - Model selection (--model, --opus, --sonnet, --4-turbo, etc.)
+   - API configurations and keys
+   - Edit formats and model-specific settings
+
+2. Git Integration:
+   - Auto-commits (--auto-commits)
+   - Commit messages (--commit-prompt)
+   - Repository management (--gitignore, --aiderignore)
+   - Author attribution settings
+
+3. Output & Display:
+   - Color themes (--dark-mode, --light-mode)
+   - Code themes (--code-theme)
+   - Pretty output options (--pretty)
+   - Diff display settings (--show-diffs)
+
+4. Performance & History:
+   - Chat history management
+   - Cache settings
+   - Token limits
+   - Map refresh strategies
+
+5. Development Tools:
+   - Linting integration (--lint-cmd)
+   - Testing setup (--test-cmd)
+   - Shell command suggestions
+   - Voice input configuration
+
+When users ask about settings, provide clear explanations and practical examples. If they need help with specific configurations, guide them through the options and recommend optimal settings based on their use case.
+
+Format responses clearly:
+1. Explain the purpose/benefit of relevant settings
+2. Show example commands or configurations
+3. Provide any relevant warnings or best practices
+4. Suggest related settings they might want to consider
+
+Remember: Don't display this comprehensive settings knowledge unless specifically asked. Focus on addressing the user's immediate needs while being aware of all configuration possibilities."
+                fi
                 update_setting "chat_system_prompt" "\"$prompt\""
                 ;;
             4)

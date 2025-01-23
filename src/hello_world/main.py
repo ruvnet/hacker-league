@@ -1,6 +1,7 @@
 import warnings
 warnings.filterwarnings('ignore', category=UserWarning)
 
+import argparse
 from hello_world.crew import HelloWorldCrew
 
 # ANSI color codes
@@ -16,10 +17,18 @@ def display_banner():
 ╚══════════════════════════════════════════════════════════════════╝
     """)
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Neural Network Orchestration System')
+    parser.add_argument('--prompt', type=str, help='Prompt for the AI system', default="Tell me about yourself")
+    parser.add_argument('--task', type=str, choices=['research', 'execute', 'both'], 
+                       help='Task to perform: research, execute, or both', default='both')
+    return parser.parse_args()
+
 def run():
+    args = parse_args()
     display_banner()
     crew = HelloWorldCrew()
-    result = crew.run()
+    result = crew.run(prompt=args.prompt, task_type=args.task)
     if result:
         print("""
 ╔══════════════════════════════════════════════════════════════════╗

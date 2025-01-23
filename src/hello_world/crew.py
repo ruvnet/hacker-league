@@ -99,14 +99,23 @@ class HelloWorldCrew:
 """
         print(progress)
             
-    async def run_with_streaming(self):
+    async def run_with_streaming(self, prompt="Tell me about yourself", task_type="both"):
         """Run crew with streaming responses using enhanced ReACT methodology"""
         # Create tools
         tools = [CustomTool()]
         
         self.progress_tracker["total_steps"] = 4  # Research + Validation + Execution + Final Validation
         
-        # Enhanced ReACT structure for researcher
+        if task_type in ["research", "both"]:
+            await self._run_researcher(prompt)
+            
+        if task_type in ["execute", "both"]:
+            await self._run_executor(prompt)
+            
+        return True
+        
+    async def _run_researcher(self, prompt):
+        """Run the researcher agent"""
         researcher_messages = [{
             "role": "system",
             "content": f"""You are a {self.agents_config['researcher']['role']} with the goal: {self.agents_config['researcher']['goal']}.
@@ -125,7 +134,7 @@ Format your response using this template:
 """
         }, {
             "role": "user",
-            "content": self.tasks_config['research_task']['description']
+            "content": f"{self.tasks_config['research_task']['description']}\n\nUser Prompt: {prompt}"
         }]
         
         self.track_progress("Research Initialization", "Starting ReACT analysis")
@@ -145,7 +154,8 @@ Format your response using this template:
 """)
         await stream_openrouter_response(researcher_messages, self.agents_config['researcher']['llm'])
         
-        # Initial messages for executor
+    async def _run_executor(self, prompt):
+        """Run the executor agent"""
         executor_messages = [{
             "role": "system",
             "content": f"""You are a {self.agents_config['executor']['role']} with the goal: {self.agents_config['executor']['goal']}.
@@ -164,7 +174,7 @@ Format your response using this template:
 """
         }, {
             "role": "user",
-            "content": self.tasks_config['execution_task']['description']
+            "content": f"{self.tasks_config['execution_task']['description']}\n\nUser Prompt: {prompt}"
         }]
         
         self.track_progress("Execution Phase", "Starting implementation validation")
@@ -187,10 +197,10 @@ Format your response using this template:
 """)
         await stream_openrouter_response(executor_messages, self.agents_config['executor']['llm'])
         
-    def run(self):
+    def run(self, prompt="Tell me about yourself", task_type="both"):
         """Run crew synchronously"""
         try:
-            return asyncio.run(self.run_with_streaming())
+            return asyncio.run(self.run_with_streaming(prompt=prompt, task_type=task_type))
         except KeyboardInterrupt:
             print("""
 ╔══════════════════════════════════════════════════════════════════╗

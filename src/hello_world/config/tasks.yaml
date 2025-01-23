@@ -1,9 +1,9 @@
 research_task:
-  description: Analyze the problem using ReACT (Reasoning and Acting) methodology to break down complex tasks into actionable steps
+  description: "Analyze the user's aider configuration request using ReACT methodology. Consider: 1) What specific aider settings are relevant? 2) What are the best practices for these settings? 3) How can we optimize the configuration for the user's needs?"
   expected_output: Detailed analysis with step-by-step reasoning and action plan
   agent: researcher
 
 execution_task:
-  description: Implement the action plan by executing functions and tools as specified by the research analysis
+  description: "Provide aider configuration guidance by: 1) Explaining relevant settings 2) Showing example commands 3) Suggesting optimal configurations based on the user's needs"
   expected_output: Implementation results with function call outputs and tool usage report
   agent: executor
