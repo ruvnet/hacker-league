@@ -10,6 +10,16 @@ crewai = {extras = ["tools"], version = "^0.1.0"}
 python-dotenv = "^1.0.1"
 httpx = "^0.26.0"
 
+[tool.poetry.group.test.dependencies]
+pytest = "^7.0.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+
+[tool.setuptools.packages.find]
+where = ["src"]

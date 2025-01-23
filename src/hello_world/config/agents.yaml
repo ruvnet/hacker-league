@@ -4,6 +4,14 @@ researcher:
   backstory: Expert researcher with analytical skills and systematic reasoning approach
   llm: deepseek/deepseek-r1
   verbose: true
+  user_prompt:
+    enabled: true
+    validation_required: true
+    progress_tracking: true
+  react_validation:
+    thought_required: true
+    reasoning_depth: 2
+    action_validation: true
 
 executor:
   role: Task Executor
@@ -11,3 +19,11 @@ executor:
   backstory: Efficient task executor specializing in implementation and tool usage
   llm: microsoft/phi-3.5-mini-128k-instruct
   verbose: true
+  user_prompt:
+    enabled: true
+    validation_required: false
+    progress_tracking: true
+  react_validation:
+    thought_required: true
+    reasoning_depth: 1
+    action_validation: true
