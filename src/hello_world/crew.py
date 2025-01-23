@@ -16,7 +16,7 @@ async def stream_openrouter_response(messages, model, progress_callback=None):
             "POST",
             "https://openrouter.ai/api/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
+                "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
                 "Content-Type": "application/json",
                 "HTTP-Referer": "http://localhost:3000",
                 "X-Title": "rUv Console"
@@ -40,23 +40,6 @@ async def stream_openrouter_response(messages, model, progress_callback=None):
                                     delta = chunk_data['choices'][0].get('delta', {})
                                     if 'content' in delta:
                                         content = delta['content']
-        # Load prompt configurations
-        try:
-            with open('src/hello_world/config/prompts.yaml', 'r') as f:
-                self.prompts_config = yaml.safe_load(f)
-        except FileNotFoundError:
-            # Maintain backward compatibility
-            self.prompts_config = {
-                'templates': {
-                    'user_prompts': {},
-                    'validation_rules': {},
-                    'progress_tracking': {}
-                }
-            }
-
-        # Initialize validation rules
-        self.validation_rules = self.prompts_config.get('templates', {}).get('validation_rules', {})
-
                                         print(content, end='', flush=True)
                     except (json.JSONDecodeError, UnicodeDecodeError):
                         continue

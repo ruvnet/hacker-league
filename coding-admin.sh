@@ -124,15 +124,28 @@ chat_with_ai() {
             "stream": true,
             "temperature": 0.7,
             "max_tokens": 4000
-        }' | while read -r line; do
+        }' | while IFS= read -r line; do
+            # Skip empty lines
+            [ -z "$line" ] && continue
+            
+            # Remove "data: " prefix if present
+            line=${line#data: }
+            
+            # Skip [DONE] message
+            [[ "$line" == "[DONE]" ]] && continue
+            
+            # Try to extract content from the JSON response
             if [[ $line == *"content"* ]]; then
-                content=$(echo $line | sed 's/.*"content"[[:space:]]*:[[:space:]]*"\([^"]*\).*/\1/')
+                # Extract content between quotes after "content":
+                content=$(echo "$line" | sed -n 's/.*"content":"\([^"]*\)".*/\1/p')
                 if [ ! -z "$content" ]; then
+                    # Unescape any escaped characters
+                    content=$(echo -e "$content")
                     echo -ne "${CYAN}$content${NC}"
                 fi
             fi
         done
-    echo
+    echo -e "\n"
 }
 
 # Setup OpenRouter API Key
