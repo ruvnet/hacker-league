@@ -16,8 +16,7 @@ class CustomTool(BaseTool):
         Returns:
             The result of the tool execution
         """
-        # Implement your custom tool logic here
-        raise NotImplementedError("Custom tool not implemented yet")
+        return f"Processed query: {query}"
 
     async def _arun(self, query: str) -> Any:
         """Use the tool asynchronously."""

@@ -1,39 +1,52 @@
 from crewai import Agent, Crew, Process, Task
-from crewai.project import CrewBase, agent, crew, task
-from crewai_tools import SerperDevTool, WebsiteSearchTool
+from hello_world.tools.custom_tool import CustomTool
+import yaml
+from dotenv import load_dotenv
+import os
 
-@CrewBase
+load_dotenv()  # Load environment variables from .env file
+
 class HelloWorldCrew:
-    @agent
-    def researcher(self) -> Agent:
-        return Agent(
-            config=self.agents_config['researcher'],
-            tools=[SerperDevTool(), WebsiteSearchTool()]
+    def __init__(self):
+        with open('src/hello_world/config/agents.yaml', 'r') as f:
+            self.agents_config = yaml.safe_load(f)
+        with open('src/hello_world/config/tasks.yaml', 'r') as f:
+            self.tasks_config = yaml.safe_load(f)
+            
+    def run(self):
+        # Create agents
+        researcher = Agent(
+            role=self.agents_config['researcher']['role'],
+            goal=self.agents_config['researcher']['goal'],
+            backstory=self.agents_config['researcher']['backstory'],
+            tools=[CustomTool()],
+            llm_config={"config_list": [{"model": self.agents_config['researcher']['llm'], "api_key": os.getenv("OPENAI_API_KEY"), "base_url": os.getenv("OPENAI_API_BASE")}]}
         )
-
-    @agent
-    def executor(self) -> Agent:
-        return Agent(
-            config=self.agents_config['executor']
+        
+        executor = Agent(
+            role=self.agents_config['executor']['role'],
+            goal=self.agents_config['executor']['goal'],
+            backstory=self.agents_config['executor']['backstory'],
+            llm_config={"config_list": [{"model": self.agents_config['executor']['llm'], "api_key": os.getenv("OPENAI_API_KEY"), "base_url": os.getenv("OPENAI_API_BASE")}]}
         )
-
-    @task
-    def research_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['research_task']
+        
+        # Create tasks
+        research_task = Task(
+            description=self.tasks_config['research_task']['description'],
+            agent=researcher
         )
-
-    @task
-    def execution_task(self) -> Task:
-        return Task(
-            config=self.tasks_config['execution_task']
+        
+        execution_task = Task(
+            description=self.tasks_config['execution_task']['description'],
+            agent=executor
         )
-
-    @crew
-    def crew(self) -> Crew:
-        return Crew(
-            agents=self.agents,
-            tasks=self.tasks,
+        
+        # Create crew
+        crew = Crew(
+            agents=[researcher, executor],
+            tasks=[research_task, execution_task],
             process=Process.sequential,
             verbose=True
         )
+        
+        return crew.kickoff()

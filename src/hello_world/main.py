@@ -1,8 +1,11 @@
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning)
+
 from hello_world.crew import HelloWorldCrew
 
 def run():
-    crew = HelloWorldCrew().crew()
-    result = crew.kickoff(inputs={'topic': 'artificial intelligence'})
+    crew = HelloWorldCrew()
+    result = crew.run()
     print(result)
 
 if __name__ == "__main__":
