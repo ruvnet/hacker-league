@@ -59,24 +59,6 @@ ${RED}╔═══════════════════════�
     read -p "Press Enter to continue..."
 }
 
-# Function to get user prompt
-get_prompt() {
-    echo -e """
-${CYAN}╔══════════════════════════════════════════════════════════════════╗
-║                   NEURAL PROMPT INTERFACE                       ║
-╚══════════════════════════════════════════════════════════════════╝${NC}
-
-${MAGENTA}▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-        💭 ENTER YOUR TASK OR QUESTION BELOW
-        🤖 AI CORES WILL ANALYZE AND EXECUTE
-        ⚡ PRESS ENTER TO BEGIN PROCESSING
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀${NC}
-
-${YELLOW}[INPUT]${NC} Enter your prompt: "
-    read -r user_prompt
-    echo "$user_prompt"
-}
-
 # Function to run the agent
 run_agent() {
     echo -e """
@@ -91,9 +73,7 @@ ${MAGENTA}▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀�
 ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀${NC}
 
 ${YELLOW}[SYS]${NC} Press ${RED}Ctrl+C${NC} to initiate emergency shutdown\n"""
-    
-    prompt=$(get_prompt)
-    if REACT_PROMPT="$prompt" poetry run python src/hello_world/main.py; then
+    if poetry run python src/hello_world/main.py; then
         echo -e """
 ${GREEN}╔══════════════════════════════════════════════════════════════════╗
 ║             🎯 MISSION COMPLETED SUCCESSFULLY 🎯                ║
