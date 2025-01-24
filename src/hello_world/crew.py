@@ -112,7 +112,56 @@ class HelloWorldCrew:
         if task_type in ["execute", "both"]:
             await self._run_executor(prompt)
             
+        if task_type == "analyze":
+            await self._run_analyzer(prompt)
+            
         return True
+            
+    async def _run_analyzer(self, prompt):
+        """Run the analyzer agent"""
+        with open('src/hello_world/config/analysis.yaml', 'r') as f:
+            analysis_config = yaml.safe_load(f)
+            
+        analyzer_messages = [{
+            "role": "system",
+            "content": f"""You are a {self.agents_config['analyzer']['role']} with the goal: {self.agents_config['analyzer']['goal']}.
+Use ReACT (Reasoning and Acting) methodology with the following structure:
+
+1. Thought: Analyze current performance metrics and thresholds
+2. Action: Compare against defined rules in analysis.yaml
+3. Observation: Document threshold violations and patterns
+4. Recommendation: Suggest optimizations based on rules
+
+Format your response using this template:
+[THOUGHT] Your analysis process...
+[ACTION] Your evaluation steps...
+[OBSERVATION] Performance findings...
+[RECOMMENDATION] Optimization suggestions...
+
+Analysis Configuration:
+{yaml.dump(analysis_config, default_flow_style=False)}
+"""
+        }, {
+            "role": "user",
+            "content": f"{self.tasks_config['analysis_task']['description']}\n\nUser Prompt: {prompt}"
+        }]
+        
+        self.track_progress("Analysis Initialization", "Starting performance analysis")
+        
+        print("""
+╔══════════════════════════════════════════════════════════════════╗
+║  📊 INITIALIZING PERFORMANCE ANALYZER v1.0 - METRICS CORE       ║
+╚══════════════════════════════════════════════════════════════════╝
+        
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+🔄 LOADING ANALYSIS CONFIGURATION...
+📡 METRIC COLLECTION: ACTIVE
+🧮 OPTIMIZATION ENGINE: ONLINE
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+
+[SYS]: Beginning Performance Analysis...
+""")
+        await stream_openrouter_response(analyzer_messages, self.agents_config['analyzer']['llm'])
         
     async def _run_researcher(self, prompt):
         """Run the researcher agent"""

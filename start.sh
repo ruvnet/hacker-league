@@ -1,12 +1,6 @@
 #!/bin/bash
 
-# Cyberpunk colors
-CYAN='\033[0;36m'
-MAGENTA='\033[0;35m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+#
 
 # Function to display the menu
 show_menu() {
@@ -23,9 +17,48 @@ ${MAGENTA}▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀�
 ${YELLOW}[1]${NC} 📦 INSTALL NEURAL DEPENDENCIES
 ${YELLOW}[2]${NC} 🚀 ACTIVATE AI CORES (DEFAULT MODE)
 ${YELLOW}[3]${NC} 🎯 ACTIVATE AI CORES (CUSTOM MODE)
-${YELLOW}[4]${NC} 💤 ENTER SLEEP MODE
+${YELLOW}[4]${NC} 📊 ANALYZE SYSTEM PERFORMANCE
+${YELLOW}[5]${NC} 💤 ENTER SLEEP MODE
 
 ${CYAN}▮${NC} Enter command: """
+}
+
+# Function to run performance analysis
+run_analysis() {
+    echo -e """
+${CYAN}╔══════════════════════════════════════════════════════════════════╗
+║                   PERFORMANCE ANALYSIS MODE                       ║
+╚══════════════════════════════════════════════════════════════════╝${NC}
+"""
+    echo -e "${YELLOW}[SYS]${NC} Enter what to analyze (or press Enter for full system analysis): "
+    read analysis_prompt
+    
+    if [ -z "$analysis_prompt" ]; then
+        PROMPT_ARG=""
+    else
+        PROMPT_ARG="--prompt \"$analysis_prompt\""
+    fi
+    
+    TASK_ARG="--task analyze"
+    
+    if eval "poetry run python src/hello_world/main.py $PROMPT_ARG $TASK_ARG"; then
+        echo -e """
+${GREEN}╔══════════════════════════════════════════════════════════════════╗
+║             📊 PERFORMANCE ANALYSIS COMPLETE 📊                   ║
+╚══════════════════════════════════════════════════════════════════╝${NC}
+
+${YELLOW}[SYS]${NC} Review the analysis results above, then press Enter to continue...
+"""
+    else
+        echo -e """
+${RED}╔══════════════════════════════════════════════════════════════════╗
+║             ⚠️ ANALYSIS PROCESS INTERRUPTED ⚠️                   ║
+╚══════════════════════════════════════════════════════════════════╝${NC}
+
+${YELLOW}[SYS]${NC} Press Enter to return to menu...
+"""
+    fi
+    read
 }
 
 # Function to get custom parameters
@@ -144,6 +177,9 @@ while true; do
             run_agent "custom"
             ;;
         4)
+            run_analysis
+            ;;
+        5)
             echo -e """
 ${CYAN}╔══════════════════════════════════════════════════════════════════╗
 ║                    ENTERING SLEEP MODE                          ║

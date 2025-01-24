@@ -20,8 +20,8 @@ def display_banner():
 def parse_args():
     parser = argparse.ArgumentParser(description='Neural Network Orchestration System')
     parser.add_argument('--prompt', type=str, help='Prompt for the AI system', default="Tell me about yourself")
-    parser.add_argument('--task', type=str, choices=['research', 'execute', 'both'], 
-                       help='Task to perform: research, execute, or both', default='both')
+    parser.add_argument('--task', type=str, choices=['research', 'execute', 'analyze', 'both'], 
+                       help='Task to perform: research, execute, analyze, or both', default='both')
     return parser.parse_args()
 
 def run():
