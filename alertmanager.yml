@@ -1,0 +1,81 @@
+global:
+  resolve_timeout: 5m
+  slack_api_url: '${SLACK_WEBHOOK_URL}'  # Set in environment
+
+# The root route on which each incoming alert enters.
+route:
+  # The root route must not have any matchers as it is the entry point for all alerts
+  receiver: 'slack-notifications'
+  
+  # The following attributes are inherited by all child routes
+  group_by: ['alertname', 'severity']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  
+  # Child routes
+  routes:
+    # Critical alerts
+    - receiver: 'slack-critical'
+      matchers:
+        - severity="critical"
+      group_wait: 10s
+      repeat_interval: 1h
+    
+    # Warning alerts
+    - receiver: 'slack-warnings'
+      matchers:
+        - severity="warning"
+      group_wait: 30s
+      repeat_interval: 2h
+
+# Inhibition rules allow to mute a set of alerts given that another alert is firing
+inhibit_rules:
+  # Mute warning alerts if there's a critical alert for the same service
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal: ['alertname']
+
+receivers:
+  - name: 'slack-notifications'
+    slack_configs:
+      - channel: '#insider-mirror-alerts'
+        send_resolved: true
+        title: '{{ template "slack.default.title" . }}'
+        text: '{{ template "slack.default.text" . }}'
+        footer: '{{ template "slack.default.footer" . }}'
+        actions:
+          - type: button
+            text: 'View in Grafana'
+            url: '${GRAFANA_URL}/d/insider-mirror'
+  
+  - name: 'slack-critical'
+    slack_configs:
+      - channel: '#insider-mirror-critical'
+        send_resolved: true
+        title: '[CRITICAL] {{ template "slack.default.title" . }}'
+        text: '{{ template "slack.default.text" . }}'
+        footer: '{{ template "slack.default.footer" . }}'
+        color: 'danger'
+        actions:
+          - type: button
+            text: 'View in Grafana'
+            url: '${GRAFANA_URL}/d/insider-mirror'
+  
+  - name: 'slack-warnings'
+    slack_configs:
+      - channel: '#insider-mirror-warnings'
+        send_resolved: true
+        title: '[WARNING] {{ template "slack.default.title" . }}'
+        text: '{{ template "slack.default.text" . }}'
+        footer: '{{ template "slack.default.footer" . }}'
+        color: 'warning'
+        actions:
+          - type: button
+            text: 'View in Grafana'
+            url: '${GRAFANA_URL}/d/insider-mirror'
+
+templates:
+  - '/etc/alertmanager/template/*.tmpl'

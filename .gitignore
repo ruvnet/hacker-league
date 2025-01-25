@@ -1,2 +1,146 @@
-.aider*
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
 .env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Logs and Data
+*.log
+logs/
+reports/
+data/
+*.csv
+*.json
+*.html
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Monitoring
+prometheus_data/
+grafana_data/
+alertmanager_data/
+redis_data/
+
+# Security
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+# Add any project-specific files or directories to ignore
+
+# Configuration
+*.env
+!env.sample
+*.local.yml
+*.local.yaml
+*.local.json
+
+# Documentation build
+docs/_build/
+docs/build/
+
+# Cache
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Profiling
+*.prof
+*.lprof
+*.stats
+
+# Backup files
+*.bak
+*.backup
+*~
+*.swp
+*.swo
+
+# Package files
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Poetry
+poetry.lock
+
+# Node (if using any JavaScript tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

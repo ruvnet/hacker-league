@@ -1,0 +1,60 @@
+# Core Dependencies
+aiohttp>=3.8.0
+pandas>=2.1.0
+numpy>=1.21.0
+pyyaml>=6.0.0
+python-dotenv>=1.0.0
+
+# API Clients
+finnhub-python>=2.4.0
+httpx>=0.24.0
+
+# Data Processing
+pytz>=2023.3
+python-dateutil>=2.8.2
+
+# Async Support
+asyncio>=3.4.3
+aiofiles>=23.1.0
+
+# CLI Support
+click>=8.1.0
+rich>=13.5.0
+tqdm>=4.65.0
+
+# Logging & Monitoring
+structlog>=23.1.0
+prometheus-client>=0.17.0
+
+# Error Handling
+backoff>=2.2.0
+tenacity>=8.2.0
+
+# Security
+cryptography>=41.0.0
+certifi>=2023.7.22
+
+# Performance
+ujson>=5.8.0
+orjson>=3.9.0
+cython>=3.0.0
+
+# Optional Dependencies
+# Uncomment if needed for specific features
+
+# Redis Support (for caching)
+# redis>=5.0.0
+# aioredis>=2.0.0
+
+# PostgreSQL Support (for persistence)
+# psycopg2-binary>=2.9.0
+# asyncpg>=0.28.0
+
+# AWS Support (for cloud deployment)
+# boto3>=1.28.0
+# aioboto3>=11.3.0
+
+# Metrics & Analytics
+# pandas-ta>=0.3.0
+# scipy>=1.11.0
+# statsmodels>=0.14.0
