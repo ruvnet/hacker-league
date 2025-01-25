@@ -1,6 +1,14 @@
-"""
-Insider Trading Mirror System
-A sophisticated tool for monitoring and mirroring publicly disclosed insider trades.
-"""
+"""Insider Trading Mirror System."""
 
-__version__ = "1.0.0"
+import logging
+
+# Configure root logger
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)8s] %(message)s (%(name)s:%(lineno)d)',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+# Create package logger
+logger = logging.getLogger("insider_mirror")
+logger.setLevel(logging.INFO)

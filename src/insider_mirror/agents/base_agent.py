@@ -22,7 +22,7 @@ class BaseAgent:
             "total_steps": 0,
             "status": ""
         }
-        self.log = logging.getLogger(__name__)
+        self.log = logging.getLogger(f"insider_mirror.agents.{name}")
 
     def load_config(self, path: str) -> Dict[str, Any]:
         """Load YAML configuration file"""
