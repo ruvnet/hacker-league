@@ -15,11 +15,7 @@ class StockAgent:
         self.name = "stock_agent"
         self.session = None
         
-        # Demo API key - replace with your own
-        self.api_key = "demo_key_123456789"
-        self.base_url = "https://demo.stock-api.com/v1"
-        
-        # Cache for technical indicators
+        # Cache for technical indicators (using local mock data)
         self.indicators_cache = {}
 
     async def _init_session(self) -> None:

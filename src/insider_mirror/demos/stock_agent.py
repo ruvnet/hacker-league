@@ -1,13 +1,20 @@
-"""Demo agent that analyzes stock data using Finnhub and OpenRouter."""
+"""Demo agent that analyzes stock data using Finnhub and OpenRouter with ReACT methodology."""
 
 import asyncio
 import logging
 import aiohttp
+import json
 import os
+import ssl
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from ..agents.base_agent import BaseAgent
 from ..cli.parser import ArgumentParser
+
+# ANSI color codes for formatted output
+CYAN = '\033[0;36m'
+GREEN = '\033[0;32m'
+NC = '\033[0m'  # No Color
 
 class StockAgent(BaseAgent):
     """Agent that demonstrates market data analysis"""
@@ -19,9 +26,22 @@ class StockAgent(BaseAgent):
         self.model = agent_config.get("model", ArgumentParser.DEFAULT_MODEL)
 
     async def _init_session(self) -> None:
-        """Initialize aiohttp session"""
+        """Initialize aiohttp session with SSL context"""
         if self.session is None or self.session.closed:
-            self.session = aiohttp.ClientSession()
+            # Configure SSL context
+            ssl_context = ssl.create_default_context()
+            ssl_context.check_hostname = True
+            ssl_context.verify_mode = ssl.CERT_REQUIRED
+            
+            # Configure connection timeout
+            timeout = aiohttp.ClientTimeout(total=30)
+            
+            # Create session with SSL context
+            connector = aiohttp.TCPConnector(ssl=ssl_context)
+            self.session = aiohttp.ClientSession(
+                connector=connector,
+                timeout=timeout
+            )
 
     async def _close_session(self) -> None:
         """Close aiohttp session"""
@@ -77,14 +97,103 @@ class StockAgent(BaseAgent):
         finally:
             await self._close_session()
 
+    async def _stream_openrouter_response(self, messages: List[Dict[str, str]]) -> str:
+        """Stream responses from OpenRouter with ReACT methodology"""
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            raise ValueError("OPENROUTER_API_KEY environment variable is required")
+        
+        await self._init_session()
+        
+        try:
+            # Configure enterprise-grade connection parameters
+            connector = aiohttp.TCPConnector(
+                ssl=ssl.create_default_context(),
+                limit=100,
+                limit_per_host=20,
+                use_dns_cache=True
+            )
+            
+            async with aiohttp.ClientSession(
+                connector=connector,
+                timeout=aiohttp.ClientTimeout(total=45)
+            ) as session:
+                async with session.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": "http://localhost:3000",
+                        "X-Title": "Insider Mirror System"
+                    },
+                    json={
+                        "model": self.model,
+                        "messages": messages,
+                        "stream": True,
+                        "temperature": 0.7
+                    },
+                    timeout=None
+                ) as response:
+                    full_response = ""
+                    async for line in response.content:
+                        if line:
+                            try:
+                                line_str = line.decode('utf-8')
+                                if line_str.startswith('data: '):
+                                    chunk_data = json.loads(line_str[6:])
+                                    if chunk_data != '[DONE]':
+                                        if 'choices' in chunk_data and len(chunk_data['choices']) > 0:
+                                            delta = chunk_data['choices'][0].get('delta', {})
+                                            if 'content' in delta:
+                                                content = delta['content']
+                                                print(content, end='', flush=True)
+                                                full_response += content
+                            except (json.JSONDecodeError, UnicodeDecodeError):
+                                continue
+                    
+                    return full_response
+                
+        except aiohttp.ClientConnectionError as e:
+            self.log.error(
+                f"Connection failed: {str(e)}\n"
+                "Troubleshooting Steps:\n"
+                "1. Verify OPENROUTER_API_KEY in .env\n"
+                "2. Check internet connection\n"
+                "3. Test DNS: curl -I https://openrouter.ai\n"
+                "4. Validate firewall rules"
+            )
+            raise RuntimeError(f"Network error: {str(e)}") from e
+        except aiohttp.ClientPayloadError as e:
+            self.log.error(f"Data streaming error: {str(e)}")
+            raise RuntimeError("Analysis interrupted") from e
+        except asyncio.TimeoutError as e:
+            self.log.error("Request timed out after 45 seconds")
+            raise RuntimeError("Service unavailable") from e
+        except Exception as e:
+            self.log.error(f"Critical error: {str(e)}")
+            raise RuntimeError("Analysis failed") from e
+            
+        finally:
+            await self._close_session()
+
     async def _analyze_stock(self, stock_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze stock data using OpenRouter LLM"""
+        """Analyze stock data using OpenRouter LLM with ReACT methodology"""
         try:
             quote = stock_data["quote"]
             profile = stock_data["profile"]
             
-            # Format data for analysis
-            prompt = f"""Analyze this stock data and provide insights:
+            # Format data for ReACT analysis
+            system_prompt = """You are an expert stock market analyst using ReACT methodology to analyze market data.
+Follow this structure:
+
+[THOUGHT] First, analyze the company profile and market position
+[ACTION] Review the provided market data and technical indicators
+[OBSERVATION] Document key findings from the data
+[REFLECTION] Synthesize insights and form recommendations
+
+Format your response using these sections clearly."""
+
+            user_prompt = f"""Analyze this stock data:
 Company: {profile.get('name', 'Unknown')} ({profile.get('ticker', 'Unknown')})
 Industry: {profile.get('finnhubIndustry', 'Unknown')}
 Market Cap: ${profile.get('marketCapitalization', 0):,.2f}M
@@ -95,56 +204,33 @@ Day Change: {((quote.get('c', 0) - quote.get('pc', 0)) / quote.get('pc', 1) * 10
 Day High: ${quote.get('h', 0):,.2f}
 Day Low: ${quote.get('l', 0):,.2f}
 
-Provide:
-1. A brief overview of the company and its current market position
-2. Analysis of today's price action and notable patterns
-3. Key technical levels and price targets
-4. Potential risks and opportunities
-"""
-            # Call OpenRouter API
-            api_key = os.getenv("OPENROUTER_API_KEY")
-            if not api_key:
-                raise ValueError("OPENROUTER_API_KEY environment variable is required")
+Provide a comprehensive analysis using the ReACT methodology."""
+
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ]
             
-            await self._init_session()
+            print("""
+╔══════════════════════════════════════════════════════════════════╗
+║  🧠 INITIALIZING MARKET ANALYSIS WITH ReACT METHODOLOGY          ║
+╚══════════════════════════════════════════════════════════════════╝
+
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+📊 DATA LOADED
+🔄 ReACT PROCESS STARTING
+💡 STREAMING ANALYSIS...
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+
+""")
             
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "X-Title": "Insider Trading Mirror System",
-                "HTTP-Referer": "https://github.com/your-username/insider-mirror",
-                "Content-Type": "application/json",
-                "OpenAI-Organization": "org-123"  # Required by OpenRouter
+            analysis = await self._stream_openrouter_response(messages)
+            
+            return {
+                "status": "success",
+                "analysis": analysis,
+                "model": self.model
             }
-            
-            data = {
-                "model": self.model,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                "temperature": 0.7,
-                "max_tokens": 1000
-            }
-            
-            self.log.info(f"Analyzing stock data with LLM model: {self.model}")
-            async with self.session.post(
-                "https://api.openrouter.ai/api/v1/chat/completions",
-                headers=headers,
-                json=data
-            ) as response:
-                if response.status == 200:
-                    llm_response = await response.json()
-                    analysis = llm_response["choices"][0]["message"]["content"]
-                    return {
-                        "status": "success",
-                        "analysis": analysis,
-                        "model": self.model
-                    }
-                else:
-                    error_text = await response.text()
-                    raise RuntimeError(f"OpenRouter API error: {error_text}")
                     
         except Exception as e:
             self.log.error(f"Error analyzing stock: {str(e)}")
@@ -157,17 +243,37 @@ Provide:
         self,
         symbol: str
     ) -> Dict[str, Any]:
-        """Execute stock agent tasks"""
+        """Execute stock agent tasks with ReACT methodology"""
         try:
-            self.track_progress(1, "Fetching stock data")
+            print(f"""
+╔══════════════════════════════════════════════════════════════════╗
+║  🚀 STOCK ANALYSIS SYSTEM v2.0 - {self.model}
+║     INITIALIZING ReACT PROTOCOLS...
+╚══════════════════════════════════════════════════════════════════╝
+
+{CYAN}▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+📡 MARKET DATA FEED: CONNECTING
+🧮 ANALYSIS ENGINE: WARMING UP
+🔍 ReACT CORE: ONLINE
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀{NC}
+""")
+            # Step 1: Data Collection
+            print(f"{GREEN}[ReACT] Phase 1: Market Data Collection{NC}")
+            print("🔄 Fetching real-time market data...")
             stock_data = await self._fetch_stock_data(symbol)
+            print("✅ Market data retrieved successfully\n")
             
-            self.track_progress(2, "Analyzing market data")
+            # Step 2: Analysis with ReACT
+            print(f"{GREEN}[ReACT] Phase 2: Neural Analysis{NC}")
+            print("🧠 Initializing ReACT analysis framework...")
             analysis = await self._analyze_stock(stock_data)
+            print("\n✅ Analysis complete\n")
             
-            self.track_progress(3, "Generating report")
+            # Step 3: Report Generation
+            print(f"{GREEN}[ReACT] Phase 3: Report Synthesis{NC}")
+            print("📊 Compiling insights and recommendations...\n")
             
-            return {
+            result = {
                 "status": "success",
                 "data": {
                     "symbol": symbol,
@@ -189,6 +295,15 @@ Provide:
                 },
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
+
+            print(f"""
+{CYAN}▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+✨ ANALYSIS COMPLETE
+📈 INSIGHTS READY
+🎯 RECOMMENDATIONS AVAILABLE
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀{NC}
+""")
+            return result
             
         except Exception as e:
             self.log.error(f"Error executing stock agent: {str(e)}")
@@ -215,7 +330,7 @@ Timestamp: {result['timestamp']}
         profile = data["profile"]
         
         # Determine trend emoji
-        trend = "🟢" if quote["change_percent"] > 0 else "🔴" if quote["change_percent"] < 0 else "⚪"
+        trend = "��" if quote["change_percent"] > 0 else "🔴" if quote["change_percent"] < 0 else "⚪"
         
         return f"""
 ╔══════════════════════════════════════════════════════════════════╗
