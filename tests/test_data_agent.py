@@ -1,215 +1,87 @@
-"""Tests for the DataAgent class."""
-
 import pytest
-import aiohttp
-import asyncio
-from datetime import datetime, timezone
-from unittest.mock import Mock, patch, AsyncMock
-from aioresponses import aioresponses
-from insider_mirror.agents.data_agent import DataAgent
+from unittest.mock import patch
+from ruv_cli.commands.agent.data_agent import DataAgent, run_data_operation
 
-@pytest.mark.asyncio
-async def test_data_agent_initialization(agent_config):
-    """Test DataAgent initialization"""
-    agent = DataAgent(agent_config["data_agent"])
-    assert agent.name == "data_agent"
-    assert agent.config == agent_config["data_agent"]
-    assert agent.validation_status == {"reasoning": [], "actions": []}
+def test_data_agent_initialization():
+    """Should initialize with default name"""
+    agent = DataAgent()
+    assert agent.name == "DataAgent"
+    
+    agent = DataAgent(name="CustomAgent")
+    assert agent.name == "CustomAgent"
 
-@pytest.mark.asyncio
-async def test_fetch_data_success(agent_config, sample_trade_data):
-    """Test successful data fetching"""
-    agent = DataAgent(agent_config["data_agent"])
-    test_url = "https://test.api/insider-trades"
-    
-    with aioresponses() as mocked:
-        mocked.get(
-            test_url,
-            status=200,
-            payload=sample_trade_data
-        )
-        
-        result = await agent.fetch_data(
-            api_key="test_key",
-            endpoint=test_url
-        )
-        
-        assert result == sample_trade_data
+def test_data_agent_run_no_operation():
+    """Should fail when no operation provided"""
+    agent = DataAgent()
+    result = agent.run("")
+    assert result == ""
 
-@pytest.mark.asyncio
-async def test_fetch_data_api_error(agent_config):
-    """Test handling of API errors during fetch"""
-    agent = DataAgent(agent_config["data_agent"])
-    test_url = "https://test.api/insider-trades"
-    
-    with aioresponses() as mocked:
-        mocked.get(
-            test_url,
-            status=500,
-            body="Internal Server Error"
-        )
-        
-        with pytest.raises(aiohttp.ClientError):
-            await agent.fetch_data(
-                api_key="test_key",
-                endpoint=test_url
-            )
+def test_data_agent_run_invalid_operation():
+    """Should fail with invalid operation"""
+    agent = DataAgent()
+    result = agent.run("invalid")
+    assert result == ""
 
-def test_validate_data_success(agent_config, sample_trade_data):
-    """Test successful data validation"""
-    agent = DataAgent(agent_config["data_agent"])
-    validated_data = agent.validate_data(sample_trade_data)
-    
-    assert len(validated_data) == len(sample_trade_data)
-    for trade in validated_data:
-        assert "symbol" in trade
-        assert "transaction_type" in trade
-        assert "shares" in trade
-        assert "price" in trade
-        assert "value" in trade
-        assert "filing_date" in trade
+def test_data_agent_load_success():
+    """Should load data successfully"""
+    agent = DataAgent()
+    result = agent.run("load", file_path="data.csv")
+    assert "Loaded data from data.csv" in result
 
-def test_validate_data_missing_fields(agent_config):
-    """Test validation with missing required fields"""
-    agent = DataAgent(agent_config["data_agent"])
-    invalid_data = [
-        {
-            "symbol": "AAPL",
-            # Missing transaction_type
-            "shares": 1000,
-            "price": 150.0
-        }
-    ]
-    
-    validated_data = agent.validate_data(invalid_data)
-    assert len(validated_data) == 0
+def test_data_agent_load_no_file():
+    """Should fail when no file path provided for load"""
+    agent = DataAgent()
+    result = agent.run("load")
+    assert result == ""
 
-def test_validate_data_invalid_types(agent_config):
-    """Test validation with invalid data types"""
-    agent = DataAgent(agent_config["data_agent"])
-    invalid_data = [
-        {
-            "symbol": "AAPL",
-            "transaction_type": "PURCHASE",
-            "shares": "not_a_number",  # Invalid type
-            "price": 150.0,
-            "value": 150000.0,
-            "filing_date": "2024-01-25T00:00:00Z"
-        }
-    ]
-    
-    validated_data = agent.validate_data(invalid_data)
-    assert len(validated_data) == 0
+def test_data_agent_describe_success():
+    """Should describe data successfully"""
+    agent = DataAgent()
+    result = agent.run("describe", file_path="data.csv", columns=["col1", "col2"])
+    assert "Description of col1, col2 in data.csv" in result
 
-@pytest.mark.asyncio
-async def test_execute_success(agent_config, sample_trade_data):
-    """Test successful execution of data agent"""
-    agent = DataAgent(agent_config["data_agent"])
-    test_url = "https://test.api/insider-trades"
-    
-    with aioresponses() as mocked:
-        mocked.get(
-            test_url,
-            status=200,
-            payload=sample_trade_data
-        )
-        
-        result = await agent.execute(
-            api_key="test_key",
-            endpoint=test_url
-        )
-        
-        assert result["status"] == "success"
-        assert len(result["data"]) == len(sample_trade_data)
-        assert "timestamp" in result
-        
-        # Verify timestamp format
-        datetime.fromisoformat(result["timestamp"].replace('Z', '+00:00'))
+def test_data_agent_describe_no_file():
+    """Should fail when no file path provided for describe"""
+    agent = DataAgent()
+    result = agent.run("describe")
+    assert result == ""
 
-@pytest.mark.asyncio
-async def test_execute_fetch_error(agent_config):
-    """Test execution handling of fetch errors"""
-    agent = DataAgent(agent_config["data_agent"])
-    test_url = "https://test.api/insider-trades"
-    
-    with aioresponses() as mocked:
-        mocked.get(
-            test_url,
-            status=500,
-            body="Internal Server Error"
-        )
-        
-        result = await agent.execute(
-            api_key="test_key",
-            endpoint=test_url
-        )
-        
-        assert result["status"] == "error"
-        assert "error" in result
-        assert "timestamp" in result
+def test_data_agent_plot_success():
+    """Should plot data successfully"""
+    agent = DataAgent()
+    result = agent.run("plot", file_path="data.csv", columns=["col1", "col2"])
+    assert "Plot saved for col1, col2 from data.csv" in result
 
-@pytest.mark.asyncio
-async def test_cleanup(agent_config):
-    """Test cleanup of data agent resources"""
-    agent = DataAgent(agent_config["data_agent"])
-    
-    # Add some test data to cleanup
-    agent.validation_status = {
-        "reasoning": ["test"],
-        "actions": ["test"]
-    }
-    
-    # Create a session to clean up
-    await agent._init_session()
-    assert agent.session is not None
-    
-    # Cleanup
-    agent.cleanup()
-    await asyncio.sleep(0.1)  # Give time for session cleanup
-    
-    assert agent.validation_status == {"reasoning": [], "actions": []}
-    assert agent.progress_tracker == {"current_step": 0, "total_steps": 0, "status": ""}
-    assert agent.session is None or agent.session.closed
+def test_data_agent_plot_no_file():
+    """Should fail when no file path provided for plot"""
+    agent = DataAgent()
+    result = agent.run("plot")
+    assert result == ""
 
-@pytest.mark.asyncio
-async def test_session_management(agent_config):
-    """Test session initialization and cleanup"""
-    agent = DataAgent(agent_config["data_agent"])
-    
-    # Test session initialization
-    await agent._init_session()
-    assert agent.session is not None
-    assert not agent.session.closed
-    
-    # Test session cleanup
-    await agent._close_session()
-    assert agent.session.closed
+def test_run_data_operation_no_operation():
+    """Should fail when no operation provided"""
+    assert not run_data_operation("")
 
-@pytest.mark.asyncio
-async def test_session_reuse(agent_config, sample_trade_data):
-    """Test session reuse for multiple requests"""
-    agent = DataAgent(agent_config["data_agent"])
-    test_url = "https://test.api/insider-trades"
+def test_run_data_operation_success():
+    """Should successfully run data operation"""
+    assert run_data_operation("load", file_path="data.csv")
+
+def test_run_data_operation_failure():
+    """Should handle operation failures"""
+    def mock_run(*args, **kwargs):
+        raise Exception("Test error")
     
-    with aioresponses() as mocked:
-        mocked.get(
-            test_url,
-            status=200,
-            payload=sample_trade_data
-        )
-        mocked.get(
-            test_url,
-            status=200,
-            payload=sample_trade_data
-        )
-        
-        # First request should create session
-        await agent.fetch_data("test_key", test_url)
-        original_session = agent.session
-        
-        # Second request should reuse session
-        await agent.fetch_data("test_key", test_url)
-        assert agent.session is original_session
-        
-        # Cleanup
-        await agent._close_session()
+    with patch('ruv_cli.commands.agent.data_agent.DataAgent.run', side_effect=mock_run):
+        assert not run_data_operation("load", file_path="data.csv")
+
+def test_data_agent_describe_all_columns():
+    """Should describe all columns when none specified"""
+    agent = DataAgent()
+    result = agent.run("describe", file_path="data.csv")
+    assert "Description of all columns in data.csv" in result
+
+def test_data_agent_plot_all_columns():
+    """Should plot all columns when none specified"""
+    agent = DataAgent()
+    result = agent.run("plot", file_path="data.csv")
+    assert "Plot saved for all columns from data.csv" in result
