@@ -1,27 +1,51 @@
-"""Demo agent that fetches and processes weather data."""
+"""Demo agent that fetches and processes weather data with enterprise-grade features."""
 
 import asyncio
 import logging
 import aiohttp
+import ssl
+import os
+import json
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# ANSI color codes for formatted output
+CYAN = '\033[0;36m'
+GREEN = '\033[0;32m'
+NC = '\033[0m'  # No Color
 
 class WeatherAgent:
-    """Agent that demonstrates API integration and data processing"""
+    """Agent that demonstrates enterprise-grade API integration and data processing"""
     
     def __init__(self):
         self.log = logging.getLogger("demos.weather_agent")
         self.name = "weather_agent"
         self.session = None
-        
-        # Demo API key - replace with your own
-        self.api_key = "demo_key_123456789"
+        self.api_key = os.getenv("OPENWEATHER_API_KEY")
         self.base_url = "https://api.openweathermap.org/data/2.5"
 
     async def _init_session(self) -> None:
-        """Initialize aiohttp session"""
+        """Initialize aiohttp session with SSL context"""
         if self.session is None or self.session.closed:
-            self.session = aiohttp.ClientSession()
+            ssl_context = ssl.create_default_context()
+            ssl_context.check_hostname = True
+            ssl_context.verify_mode = ssl.CERT_REQUIRED
+            
+            timeout = aiohttp.ClientTimeout(total=30)
+            connector = aiohttp.TCPConnector(
+                ssl=ssl_context,
+                limit=100,
+                limit_per_host=20,
+                use_dns_cache=True
+            )
+            self.session = aiohttp.ClientSession(
+                connector=connector,
+                timeout=timeout
+            )
 
     async def _close_session(self) -> None:
         """Close aiohttp session"""
@@ -67,17 +91,33 @@ class WeatherAgent:
         city: str,
         country_code: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Get current weather for a location"""
+        """Get current weather for a location with enterprise-grade error handling"""
         try:
+            print(f"""
+╔══════════════════════════════════════════════════════════════════╗
+║  🌤️ WEATHER SYSTEM v1.0
+║     ANALYZING {city.upper()}, {country_code if country_code else ''}...
+╚══════════════════════════════════════════════════════════════════╝
+
+{CYAN}▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+📡 FETCHING WEATHER DATA
+🧮 PROCESSING: ACTIVE
+📊 ANALYSIS: READY
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀{NC}
+""")
+            
+            if not self.api_key:
+                raise ValueError("OPENWEATHER_API_KEY environment variable is required")
+                
             await self._init_session()
             
-            # Build query
-            location = f"{city}"
-            if country_code:
-                location = f"{city},{country_code}"
+            # Build query with error handling
+            location = city if not country_code else f"{city},{country_code}"
             
             # Make API request
+            print(f"{GREEN}[WEATHER] Phase 1: Data Collection{NC}")
             self.log.info(f"Fetching weather data for {location}")
+            
             params = {
                 "q": location,
                 "appid": self.api_key
@@ -89,7 +129,21 @@ class WeatherAgent:
             ) as response:
                 if response.status == 200:
                     data = await response.json()
+                    print("✅ Weather data retrieved\n")
+                    
+                    # Process and format data
+                    print(f"{GREEN}[WEATHER] Phase 2: Data Processing{NC}")
+                    print("🧮 Processing weather information...")
                     formatted_data = self._format_weather_data(data)
+                    print("✅ Processing complete\n")
+                    
+                    print(f"""
+{CYAN}▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+✨ ANALYSIS COMPLETE
+📊 DATA PROCESSED
+🎯 READY FOR DISPLAY
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀{NC}
+""")
                     
                     return {
                         "status": "success",
@@ -98,7 +152,7 @@ class WeatherAgent:
                     }
                 else:
                     error_text = await response.text()
-                    raise RuntimeError(f"API error: {error_text}")
+                    raise RuntimeError(f"Weather API error: {error_text}")
                     
         except Exception as e:
             self.log.error(f"Error fetching weather: {str(e)}")
@@ -112,7 +166,7 @@ class WeatherAgent:
             await self._close_session()
 
     def format_output(self, result: Dict[str, Any]) -> str:
-        """Format weather data for display"""
+        """Format weather data for display with improved visuals"""
         if result["status"] != "success":
             return f"""
 ╔══════════════════════════════════════════════════════════════════╗
@@ -124,9 +178,24 @@ Timestamp: {result['timestamp']}
 """
         
         data = result["data"]
+        conditions = data['conditions']['main'].lower()
+        
+        # Select weather emoji based on conditions
+        weather_emoji = "🌤️"  # default
+        if "cloud" in conditions:
+            weather_emoji = "☁️"
+        elif "rain" in conditions:
+            weather_emoji = "🌧️"
+        elif "snow" in conditions:
+            weather_emoji = "🌨️"
+        elif "clear" in conditions:
+            weather_emoji = "☀️"
+        elif "storm" in conditions or "thunder" in conditions:
+            weather_emoji = "⛈️"
+        
         return f"""
 ╔══════════════════════════════════════════════════════════════════╗
-║  🌤️  Weather Report - {data['location']['city']}, {data['location']['country']}
+║  {weather_emoji}  Weather Report - {data['location']['city']}, {data['location']['country']}
 ╚══════════════════════════════════════════════════════════════════╝
 
 📍 Location:
@@ -146,22 +215,32 @@ Timestamp: {result['timestamp']}
 """
 
 async def main():
-    """Demo the weather agent"""
+    """Run the WeatherAgent demo with enterprise-grade setup"""
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
     agent = WeatherAgent()
     
-    # Demo cities
+    # Demo cities with country codes
     locations = [
         ("London", "UK"),
         ("New York", "US"),
         ("Tokyo", "JP"),
-        ("Sydney", "AU")
+        ("Sydney", "AU"),
+        ("Paris", "FR")
     ]
     
     for city, country in locations:
-        result = await agent.get_weather(city, country)
-        print(agent.format_output(result))
-        await asyncio.sleep(1)  # Pause between demos
+        try:
+            result = await agent.get_weather(city, country)
+            print(agent.format_output(result))
+            await asyncio.sleep(1)  # Pause between demos
+        except Exception as e:
+            logging.error(f"Error processing {city}: {str(e)}")
+            continue
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     asyncio.run(main())

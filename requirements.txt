@@ -1,10 +1,13 @@
 # Core dependencies
 e2b-code-interpreter>=0.1.0
 openrouter>=0.1.0
+python-dotenv>=0.19.0
 
 # CLI dependencies
 click>=8.0.0
-python-dotenv>=0.19.0
+
+# Communication dependencies
+slack-sdk>=3.19.0
 
 # Testing dependencies
 pytest>=7.0.0

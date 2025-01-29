@@ -11,11 +11,13 @@ from .base_agent import BaseAgent
 
 class DataAgent(BaseAgent):
     """Agent responsible for data acquisition and validation"""
-    
     def __init__(self, agent_config: Dict[str, Any]):
         self.name = "data_agent"  # Set name before super().__init__
         super().__init__(self.name, agent_config)
         self.tasks_config = self.load_config("src/insider_mirror/config/tasks.yaml")
+        self.session = None
+        # Set logging level to DEBUG
+        self.log.setLevel("DEBUG")
         self.session = None
 
     async def _init_session(self) -> None:
@@ -143,7 +145,22 @@ class DataAgent(BaseAgent):
                 
                 # Handle different API response formats
                 if api_type == "finnhub":
-                    return data
+                    self.log.debug(f"Finnhub raw response type: {type(data)}")
+                    self.log.debug(f"Finnhub raw response keys: {data.keys() if isinstance(data, dict) else 'Not a dict'}")
+                    raw_data = data.get('data', []) if isinstance(data, dict) else []
+                    self.log.debug(f"Number of raw records: {len(raw_data)}")
+                    if raw_data:
+                        self.log.debug(f"First record example: {raw_data[0]}")
+                        self.log.debug(f"First record keys: {raw_data[0].keys() if isinstance(raw_data[0], dict) else 'Not a dict'}")
+                    # Map Finnhub fields to our expected format
+                    return [{
+                        'symbol': record.get('symbol', ''),
+                        'transaction_type': 'PURCHASE' if record.get('transactionCode') == '38' else 'SALE',
+                        'shares': abs(float(record.get('change', 0))),
+                        'price': float(record.get('transactionPrice', 0)),
+                        'value': abs(float(record.get('change', 0)) * float(record.get('transactionPrice', 0))),
+                        'filing_date': record.get('filingDate', '')
+                    } for record in raw_data]
                 else:  # tradefeeds
                     return data.get('results', {}).get('output', {}).get('holdings', [])
                 
@@ -153,8 +170,10 @@ class DataAgent(BaseAgent):
 
     def validate_data(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Validate fetched data"""
+        self.log.debug(f"Validating data type: {type(data)}")
         if not isinstance(data, list):
-            self.log.error("Invalid data format: expected list")
+            self.log.error(f"Invalid data format: expected list, got {type(data)}")
+            self.log.debug(f"Data content: {str(data)[:500]}...")  # First 500 chars
             return []
             
         required_fields = {
@@ -169,11 +188,19 @@ class DataAgent(BaseAgent):
         valid_records = []
         for record in data:
             try:
-                # Check required fields and types
-                if not all(
-                    field in record and isinstance(record[field], field_type)
-                    for field, field_type in required_fields.items()
-                ):
+                # Check required fields and types with detailed logging
+                valid = True
+                for field, field_type in required_fields.items():
+                    if field not in record:
+                        self.log.debug(f"Missing field: {field} in record {record}")
+                        valid = False
+                        break
+                    if not isinstance(record[field], field_type):
+                        self.log.debug(f"Invalid type for {field}: expected {field_type}, got {type(record[field])} in record {record}")
+                        valid = False
+                        break
+                
+                if not valid:
                     continue
                     
                 # Additional validation rules

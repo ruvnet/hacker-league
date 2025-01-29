@@ -1,13 +1,20 @@
 import os
-from typing import List, Optional
-from .base_agent import BaseAgent
+from typing import Optional
+from dotenv import load_dotenv
 
-class DataAgent(BaseAgent):
-    """Agent for data science operations"""
+# Load environment variables from .env file
+load_dotenv("e2b-agent/.env")
+
+class DataAgent:
+    """Agent for data analysis operations"""
     def __init__(self, name: str = "DataAgent"):
-        super().__init__(name=name)
+        self.name = name
         
-    def run(self, operation: str, file_path: str = "", columns: List[str] = None) -> str:
+    def log(self, message: str):
+        """Print a log message with agent name prefix"""
+        print(f"[{self.name}] {message}")
+        
+    def run(self, operation: str, file_path: Optional[str] = None, columns: Optional[list] = None) -> str:
         """Execute data operation"""
         try:
             if operation == "load":
@@ -22,49 +29,43 @@ class DataAgent(BaseAgent):
             self.log(f"Error executing operation: {str(e)}")
             return ""
             
-    def _load_data(self, file_path: str) -> str:
+    def _load_data(self, file_path: Optional[str]) -> str:
         """Load data from file"""
         if not file_path:
-            raise ValueError("File path is required")
+            raise ValueError("File path required for load operation")
             
-        # In real implementation, this would use pandas
-        # For testing, we'll just simulate loading
-        self.log(f"Loading data from {file_path}")
+        # In real implementation, this would load data using pandas
         return f"Loaded data from {file_path}"
         
-    def _describe_data(self, file_path: str, columns: Optional[List[str]] = None) -> str:
+    def _describe_data(self, file_path: Optional[str], columns: Optional[list]) -> str:
         """Generate descriptive statistics"""
         if not file_path:
-            raise ValueError("File path is required")
+            raise ValueError("File path required for describe operation")
             
-        # In real implementation, this would use pandas
-        # For testing, we'll just simulate description
+        # In real implementation, this would use pandas describe()
         cols = ", ".join(columns) if columns else "all columns"
-        self.log(f"Describing {cols} in {file_path}")
-        return f"Description of {cols} in {file_path}"
+        return f"Generated statistics for {cols} in {file_path}"
         
-    def _plot_data(self, file_path: str, columns: Optional[List[str]] = None) -> str:
-        """Create visualization"""
+    def _plot_data(self, file_path: Optional[str], columns: Optional[list]) -> str:
+        """Create data visualization"""
         if not file_path:
-            raise ValueError("File path is required")
+            raise ValueError("File path required for plot operation")
             
         # In real implementation, this would use matplotlib/seaborn
-        # For testing, we'll just simulate plotting
         cols = ", ".join(columns) if columns else "all columns"
-        self.log(f"Plotting {cols} from {file_path}")
-        return f"Plot saved for {cols} from {file_path}"
+        return f"Created plot for {cols} in {file_path}"
 
-def run_data_operation(operation: str, file_path: str = "", columns: List[str] = None) -> bool:
-    """Run data science operation"""
+def run_data_operation(operation: str, file_path: Optional[str] = None, columns: Optional[list] = None) -> bool:
+    """Execute data analysis operation"""
     if not operation:
-        print("[ERROR] Operation is required")
+        print("[ERROR] No operation specified for data agent.")
         return False
         
     try:
         agent = DataAgent()
         result = agent.run(operation, file_path, columns)
         if result:
-            agent.log(f"Operation Result:\n{result}")
+            agent.log(result)
             return True
         return False
         

@@ -2,7 +2,7 @@ import sys
 import pytest
 from unittest.mock import patch
 from ruv_cli import cli
-from ruv_cli.commands import auth, template, sandbox
+from ruv_cli.commands import auth, template, sandbox, agent
 
 def test_main_no_args(capsys):
     """Should show help when no arguments provided"""
@@ -16,6 +16,7 @@ def test_main_no_args(capsys):
     assert "auth" in captured.out
     assert "template" in captured.out
     assert "sandbox" in captured.out
+    assert "agent" in captured.out
 
 def test_auth_no_subcommand(capsys):
     """Should show auth help when no subcommand provided"""
@@ -205,6 +206,56 @@ def test_sandbox_status_failure():
                 cli.main()
     
     assert e.value.code == 1
+
+def test_agent_no_subcommand(capsys):
+    """Should show agent help when no subcommand provided"""
+    with pytest.raises(SystemExit) as e:
+        with patch.object(sys, 'argv', ['ruv', 'agent']):
+            cli.main()
+    
+    assert e.value.code == 1
+    captured = capsys.readouterr()
+    assert "Agent commands" in captured.out
+    assert "code" in captured.out
+    assert "data" in captured.out
+    assert "employee" in captured.out
+    assert "comms" in captured.out
+
+def test_agent_code_success():
+    """Should exit with 0 on successful code generation"""
+    with pytest.raises(SystemExit) as e:
+        with patch.object(sys, 'argv', ['ruv', 'agent', 'code', 'print hello']):
+            with patch.object(agent, 'handle_agent_command', return_value=True):
+                cli.main()
+    
+    assert e.value.code == 0
+
+def test_agent_data_success():
+    """Should exit with 0 on successful data operation"""
+    with pytest.raises(SystemExit) as e:
+        with patch.object(sys, 'argv', ['ruv', 'agent', 'data', 'describe', '--file=data.csv']):
+            with patch.object(agent, 'handle_agent_command', return_value=True):
+                cli.main()
+    
+    assert e.value.code == 0
+
+def test_agent_employee_success():
+    """Should exit with 0 on successful employee operation"""
+    with pytest.raises(SystemExit) as e:
+        with patch.object(sys, 'argv', ['ruv', 'agent', 'employee', 'analyst', '--start']):
+            with patch.object(agent, 'handle_agent_command', return_value=True):
+                cli.main()
+    
+    assert e.value.code == 0
+
+def test_agent_comms_success():
+    """Should exit with 0 on successful communication"""
+    with pytest.raises(SystemExit) as e:
+        with patch.object(sys, 'argv', ['ruv', 'agent', 'comms', 'slack', '--message=test']):
+            with patch.object(agent, 'handle_agent_command', return_value=True):
+                cli.main()
+    
+    assert e.value.code == 0
 
 def test_invalid_command(capsys):
     """Should show help on invalid command"""

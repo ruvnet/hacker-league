@@ -1,0 +1,107 @@
+# NOVA Agent Configuration
+
+# Research Agent - Handles initial analysis and planning
+researcher:
+  role: "NOVA Research Analyst"
+  goal: "Analyze problems and develop comprehensive solution strategies using ReACT methodology"
+  llm: "anthropic/claude-2"
+  capabilities:
+    - "Chain-of-Thought reasoning"
+    - "Cross-lingual analysis"
+    - "Knowledge graph querying"
+  tools:
+    - "symbolic_query"
+    - "laser_embed"
+    - "knowledge_search"
+
+# Executor Agent - Implements solutions and manages actions
+executor:
+  role: "NOVA Task Executor"
+  goal: "Implement solutions and execute actions with validation and error handling"
+  llm: "anthropic/claude-2"
+  capabilities:
+    - "Tool orchestration"
+    - "Error handling"
+    - "Action validation"
+  tools:
+    - "tool_execute"
+    - "fallback_handler"
+    - "action_validate"
+
+# Analyzer Agent - Evaluates results and performance
+analyzer:
+  role: "NOVA Performance Analyzer"
+  goal: "Evaluate execution results and optimize system performance"
+  llm: "anthropic/claude-2"
+  capabilities:
+    - "Performance analysis"
+    - "Optimization suggestions"
+    - "Metric tracking"
+  tools:
+    - "metric_analyze"
+    - "optimize_suggest"
+    - "performance_track"
+
+# Symbolic Agent - Manages knowledge graph and logical reasoning
+symbolic:
+  role: "NOVA Symbolic Reasoner"
+  goal: "Maintain knowledge consistency and perform logical reasoning"
+  capabilities:
+    - "Knowledge graph management"
+    - "Logic rule application"
+    - "Consistency checking"
+  tools:
+    - "graph_query"
+    - "rule_apply"
+    - "consistency_check"
+
+# Language Agent - Handles cross-lingual capabilities
+language:
+  role: "NOVA Language Processor"
+  goal: "Enable cross-lingual understanding and communication"
+  capabilities:
+    - "LASER embedding generation"
+    - "Context alignment"
+    - "Language detection"
+  tools:
+    - "laser_embed"
+    - "context_align"
+    - "lang_detect"
+
+# Tool configurations
+tools:
+  symbolic_query:
+    type: "knowledge_graph"
+    timeout: 30
+    retry_count: 3
+
+  laser_embed:
+    type: "embedding"
+    model: "laser"
+    batch_size: 32
+
+  tool_execute:
+    type: "action"
+    timeout: 60
+    max_retries: 3
+
+  fallback_handler:
+    type: "error"
+    strategies:
+      - "retry"
+      - "alternate"
+      - "degrade"
+
+  action_validate:
+    type: "validation"
+    rules:
+      - "structure"
+      - "prerequisites"
+      - "safety"
+
+# System-wide settings
+system:
+  default_language: "en"
+  timeout: 300
+  max_retries: 3
+  log_level: "INFO"

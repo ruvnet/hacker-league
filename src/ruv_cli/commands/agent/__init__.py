@@ -1,6 +1,7 @@
 from .code_agent import run_code
 from .data_agent import run_data_operation
 from .employee_agent import manage_employee_agent
+from .comms_agent import handle_communication
 
 def handle_agent_command(args):
     """Route agent commands to appropriate handlers"""
@@ -21,6 +22,12 @@ def handle_agent_command(args):
             start=args.start,
             stop=args.stop,
             status=args.status
+        )
+        return success
+    elif args.agent_cmd == "comms":
+        success = handle_communication(
+            method=args.method,
+            message=args.message
         )
         return success
     else:

@@ -1,6 +1,6 @@
 import argparse
 import sys
-from .commands import auth, template, sandbox
+from .commands import auth, template, sandbox, agent
 
 class RuvArgumentParser(argparse.ArgumentParser):
     def error(self, message):
@@ -61,11 +61,12 @@ def main():
     )
 
     # Template build command
-    template_sub.add_parser(
+    build_parser = template_sub.add_parser(
         "build",
         help="Build template",
         description="Build sandbox template from current directory"
     )
+    build_parser.add_argument("--name", help="Template name")
 
     # Template list command
     template_sub.add_parser(
@@ -108,6 +109,61 @@ def main():
         description="Get detailed status of a sandbox"
     )
     status_parser.add_argument("id", help="Sandbox ID to check")
+
+    # Agent subcommand
+    agent_parser = subparsers.add_parser(
+        "agent",
+        help="Agent commands",
+        description="Commands for managing different types of agents"
+    )
+    agent_sub = agent_parser.add_subparsers(
+        dest="agent_cmd",
+        title="Agent commands",
+        metavar="COMMAND"
+    )
+
+    # Code agent command
+    code_parser = agent_sub.add_parser(
+        "code",
+        help="Generate and run code",
+        description="Generate and execute Python code in sandbox"
+    )
+    code_parser.add_argument("query", nargs="*", help="Code generation prompt")
+
+    # Data agent command
+    data_parser = agent_sub.add_parser(
+        "data",
+        help="Data analysis operations",
+        description="Load, analyze, and visualize data"
+    )
+    data_parser.add_argument("operation", help="Operation (load/describe/plot)")
+    data_parser.add_argument("--file", help="Data file path")
+    data_parser.add_argument("--columns", nargs="*", help="Columns to analyze")
+
+    # Employee agent command
+    employee_parser = agent_sub.add_parser(
+        "employee",
+        help="Virtual employee management",
+        description="Manage long-running specialized agents"
+    )
+    employee_parser.add_argument("role", help="Employee role")
+    employee_parser.add_argument("--start", action="store_true", help="Start agent")
+    employee_parser.add_argument("--stop", action="store_true", help="Stop agent")
+    employee_parser.add_argument("--status", action="store_true", help="Check status")
+
+    # Communication agent command
+    comms_parser = agent_sub.add_parser(
+        "comms",
+        help="Communication operations",
+        description="Send messages via Slack or email"
+    )
+    comms_parser.add_argument(
+        "method",
+        choices=["slack", "email"],
+        metavar="METHOD",
+        help="Communication method (slack/email)"
+    )
+    comms_parser.add_argument("--message", help="Message to send")
     
     args = parser.parse_args()
     
@@ -166,6 +222,12 @@ def main():
         else:
             sandbox_parser.print_help()
             sys.exit(1)
+    elif args.command == "agent":
+        if not args.agent_cmd:
+            agent_parser.print_help()
+            sys.exit(1)
+        success = agent.handle_agent_command(args)
+        sys.exit(0 if success else 1)
     else:
         parser.print_help()
         sys.exit(1)

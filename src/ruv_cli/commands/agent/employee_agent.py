@@ -2,7 +2,11 @@ import os
 import time
 import threading
 from typing import Dict, Optional
+from dotenv import load_dotenv
 from .base_agent import BaseAgent
+
+# Load environment variables from .env file
+load_dotenv("e2b-agent/.env")
 
 # Global store for running agents
 AGENT_THREADS: Dict[str, threading.Thread] = {}
@@ -58,7 +62,6 @@ class EmployeeAgent(BaseAgent):
         
     def _stop_agent(self) -> str:
         """Stop the agent thread"""
-        # For instance method, use role from instance
         agent_id = ROLE_TO_ID.get(self.role)
         if not agent_id:
             return f"Agent {self.role} not running"
