@@ -17,20 +17,17 @@ from nova.cache import NovaCache
 
 load_dotenv()  # Load environment variables from .env file
 
-# Global cache instance
-_cache = NovaCache()
-
-async def stream_openrouter_response(messages, model, cache: NovaCache, progress_callback=None):
+async def stream_openrouter_response(messages, model, cache: NovaCache):
     """Stream responses directly from OpenRouter with progress tracking and caching"""
-    # Generate cache key from messages and model
-    cache_key = json.dumps({"messages": messages, "model": model}, sort_keys=True)
+    # Extract prompt from messages
+    prompt = messages[-1]['content'] if messages else ""
     
     # Try to get from cache first
-    cached_response = await cache.get_api_result(cache_key)
+    cached_response = await cache.get_response(prompt)
     if cached_response is not None:
-        print(cached_response, end='', flush=True)
         return
-
+        
+    # If not in cache, get from OpenRouter
     async with httpx.AsyncClient() as client:
         async with client.stream(
             "POST",
@@ -67,13 +64,13 @@ async def stream_openrouter_response(messages, model, cache: NovaCache, progress
                         continue
             
             # Cache the complete response
-            await cache.set_api_result(cache_key, full_response)
+            await cache.set_response(prompt, full_response)
 
 class NovaCrew:
     """Main NOVA implementation combining all components"""
     
     def __init__(self):
-        self.cache = _cache  # Use global cache instance
+        self.cache = NovaCache()
         self.symbolic_engine = create_tool("symbolic")
         self.language_normalizer = create_tool("data")  # Using data tool for LASER functionality
         self.tool_interface = create_tool("api")
@@ -81,56 +78,6 @@ class NovaCrew:
         # Initialize tracking
         self.validation_status = {"reasoning": [], "actions": []}
         self.progress_tracker = {"current_step": 0, "total_steps": 0, "status": ""}
-
-    async def validate_reasoning(self, reasoning_step: Dict) -> Dict:
-        """Validate reasoning using symbolic engine and cache results"""
-        cache_key = json.dumps(reasoning_step, sort_keys=True)
-        
-        # Try to get validation result from cache
-        cached_result = await self.cache.get_inference(cache_key)
-        if cached_result is not None:
-            return cached_result
-            
-        validation_result = {
-            "step": reasoning_step,
-            "valid": True,
-            "feedback": []
-        }
-        
-        if not reasoning_step.get("thought"):
-            validation_result["valid"] = False
-            validation_result["feedback"].append("Missing thought process")
-        
-        self.validation_status["reasoning"].append(validation_result)
-        
-        # Cache the validation result
-        await self.cache.set_inference(cache_key, validation_result)
-        return validation_result
-
-    async def validate_action(self, action_step: Dict) -> Dict:
-        """Validate action before execution and cache results"""
-        cache_key = json.dumps(action_step, sort_keys=True)
-        
-        # Try to get validation result from cache
-        cached_result = await self.cache.get_inference(cache_key)
-        if cached_result is not None:
-            return cached_result
-            
-        validation_result = {
-            "step": action_step,
-            "valid": True,
-            "feedback": []
-        }
-        
-        if not action_step.get("action"):
-            validation_result["valid"] = False
-            validation_result["feedback"].append("Missing action definition")
-            
-        self.validation_status["actions"].append(validation_result)
-        
-        # Cache the validation result
-        await self.cache.set_inference(cache_key, validation_result)
-        return validation_result
 
     def track_progress(self, step_type: str, status: str):
         """Track progress with detailed formatting"""
@@ -148,12 +95,8 @@ class NovaCrew:
 
     async def run_with_streaming(self, prompt: str = "Tell me about yourself", task_type: str = "both") -> bool:
         """Run NOVA system with streaming responses"""
-        cleanup_task = None
         try:
             self.progress_tracker["total_steps"] = 4
-            
-            # Start cache cleanup task
-            cleanup_task = asyncio.create_task(self.cache.start_cleanup_task())
             
             print("""
 ╔══════════════════════════════════════════════════════════════════╗
@@ -178,9 +121,7 @@ Cache Performance Metrics:
 - Hit Rate: {metrics['hit_rate']:.2f}%
 - Hits: {metrics['hits']}
 - Misses: {metrics['misses']}
-- Evictions: {metrics['evictions']}
-- API Cache Size: {metrics['api_cache_size']}
-- Inference Cache Size: {metrics['inference_cache_size']}
+- Cache Size: {metrics['cache_size']}
 """)
             
             print("""
@@ -206,15 +147,6 @@ Cache Performance Metrics:
 🔧 Initiating recovery protocols...
 """)
             return False
-            
-        finally:
-            # Cancel cleanup task if it exists
-            if cleanup_task is not None:
-                cleanup_task.cancel()
-                try:
-                    await cleanup_task
-                except asyncio.CancelledError:
-                    pass
 
     async def _run_research_phase(self, prompt: str):
         """Execute research phase"""
