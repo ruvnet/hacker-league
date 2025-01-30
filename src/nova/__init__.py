@@ -1,8 +1,6 @@
 """
 NOVA (Neuro-Symbolic, Optimized, Versatile Agent)
 A framework for building autonomous, multilingual, and logically consistent AI solutions.
-
-Created by extending the original NOVA methodology by rUv (github.com/ruvnet/nova)
 """
 
 from nova.crew import NovaCrew

@@ -1,5 +1,5 @@
 """
-NOVA (Neuro-Symbolic, Optimized, Versatile Agent) Main Entry Point
+NOVA (Neuro-Symbolic, Optimized, Versatile Agent) CLI Entry Point
 """
 
 import warnings
@@ -10,103 +10,65 @@ from nova.crew import NovaCrew
 
 # ANSI color codes
 MAGENTA = '\033[0;35m'
-CYAN = '\033[0;36m'
 RED = '\033[0;31m'
 NC = '\033[0m'  # No Color
 
 def display_banner():
-    """Display NOVA system banner"""
-    print(f"""{CYAN}
+    print("""
 ╔══════════════════════════════════════════════════════════════════╗
 ║                    NOVA ORCHESTRATION SYSTEM                     ║
 ║        [ NEURO-SYMBOLIC OPTIMIZED VERSATILE AGENT v2.0 ]        ║
-╚══════════════════════════════════════════════════════════════════╝{NC}
-    """)
+╚══════════════════════════════════════════════════════════════════╝
+""")
 
 def parse_args():
-    """Parse command line arguments"""
-    parser = argparse.ArgumentParser(
-        description='NOVA (Neuro-Symbolic, Optimized, Versatile Agent) System'
-    )
-    
-    parser.add_argument(
-        '--prompt', 
-        type=str, 
-        help='Input prompt for the NOVA system',
-        default="Tell me about yourself"
-    )
-    
-    parser.add_argument(
-        '--task', 
-        type=str, 
-        choices=['research', 'execute', 'analyze', 'both'],
-        help='Task type to perform: research, execute, analyze, or both',
-        default='both'
-    )
-    
-    parser.add_argument(
-        '--lang', 
-        type=str,
-        help='Source language code (e.g., en, es, fr)',
-        default=None
-    )
-    
-    parser.add_argument(
-        '--domain',
-        type=str,
-        help='Specific domain for context (e.g., healthcare, finance)',
-        default=None
-    )
-    
+    parser = argparse.ArgumentParser(description='NOVA Neural Orchestration System')
+    parser.add_argument('--prompt', type=str, help='Prompt for the AI system', default="Tell me about yourself")
+    parser.add_argument('--task', type=str, choices=['research', 'execute', 'analyze', 'both'], 
+                       help='Task to perform: research, execute, analyze, or both', default='both')
     return parser.parse_args()
 
 def run():
-    """Main execution function"""
     args = parse_args()
     display_banner()
     
-    # Initialize NOVA system
-    print(f"""{CYAN}
+    print("""
 ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
 🔄 INITIALIZING NOVA CORE SYSTEMS...
 📡 NEURAL INTERFACE: ONLINE
 🧠 SYMBOLIC ENGINE: ACTIVE
 🌐 LASER EMBEDDINGS: LOADED
 🔧 TOOL INTERFACE: READY
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀{NC}
-    """)
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+""")
     
     crew = NovaCrew()
-    result = crew.run(
-        prompt=args.prompt,
-        task_type=args.task
-    )
+    result = crew.run(prompt=args.prompt, task_type=args.task)
     
     if result:
-        print(f"""{MAGENTA}
+        print("""
 ╔══════════════════════════════════════════════════════════════════╗
 ║                🌟 NOVA EXECUTION COMPLETE 🌟                     ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+""" + MAGENTA + """▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
         ✨ ALL OBJECTIVES ACHIEVED
         📊 PERFORMANCE METRICS OPTIMAL
         🔒 SYSTEM INTEGRITY MAINTAINED
         🌐 KNOWLEDGE BASE UPDATED
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀{NC}
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀""" + NC + """
         """)
     else:
-        print(f"""{RED}
+        print("""
 ╔══════════════════════════════════════════════════════════════════╗
 ║             ⚠️ NOVA EXECUTION INTERRUPTED ⚠️                    ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+""" + RED + """▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
         🔍 DIAGNOSTIC SCAN INITIATED
         💫 QUANTUM STATE PRESERVED
         🔄 READY FOR REACTIVATION
-        📡 AWAITING FURTHER INSTRUCTIONS
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀{NC}
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀""" + NC + """
         """)
 
 if __name__ == "__main__":
