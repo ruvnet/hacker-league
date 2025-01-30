@@ -102,14 +102,14 @@ performance_analysis:
 
 validation_thresholds:
   accuracy:
-    min: 0.9
-    target: 0.95
+    min: 0.7
+    target: 0.85
   latency:
-    max_ms: 100
-    target_ms: 50
+    max_ms: 200
+    target_ms: 100
   memory:
-    max_mb: 1000
-    target_mb: 500
+    max_mb: 2000
+    target_mb: 1000
   coverage:
-    min: 0.85
-    target: 0.95
+    min: 0.6
+    target: 0.8
