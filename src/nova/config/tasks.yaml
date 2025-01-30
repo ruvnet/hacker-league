@@ -1,123 +1,115 @@
-# NOVA Task Configuration
+# NOVA Knowledge Distillation Tasks
 
-# Research Tasks
-research_task:
-  description: "Analyze and develop solution strategies using ReACT methodology"
+knowledge_extraction:
+  description: Extract domain-specific knowledge and reasoning patterns
+  validation_required: true
   steps:
-    - name: "Initial Analysis"
-      type: "thought"
-      required: true
-      validation:
-        - "completeness"
-        - "logic"
-    - name: "Knowledge Query"
-      type: "action"
-      required: false
-      tools:
-        - "symbolic_query"
-        - "knowledge_search"
-    - name: "Strategy Development"
-      type: "thought"
-      required: true
-      validation:
-        - "feasibility"
-        - "completeness"
+    - name: identify_core_concepts
+      description: Identify and document core domain concepts
+      validation: true
+      metrics:
+        - concept_coverage
+        - relationship_clarity
 
-# Execution Tasks
-execution_task:
-  description: "Implement solutions with validation and error handling"
+    - name: map_relationships
+      description: Map relationships between concepts
+      validation: true
+      metrics:
+        - relationship_completeness
+        - graph_connectivity
+
+    - name: extract_reasoning_patterns
+      description: Extract common reasoning patterns
+      validation: true
+      metrics:
+        - pattern_coverage
+        - reasoning_depth
+
+    - name: validate_completeness
+      description: Validate knowledge extraction completeness
+      validation: true
+      metrics:
+        - coverage_score
+        - consistency_score
+
+model_training:
+  description: Train and optimize student models
+  validation_required: true
   steps:
-    - name: "Plan Validation"
-      type: "thought"
-      required: true
-      validation:
-        - "prerequisites"
-        - "safety"
-    - name: "Tool Execution"
-      type: "action"
-      required: true
-      tools:
-        - "tool_execute"
-        - "fallback_handler"
-    - name: "Result Verification"
-      type: "thought"
-      required: true
-      validation:
-        - "success"
-        - "completeness"
+    - name: initialize_architecture
+      description: Initialize student model architecture
+      validation: true
+      metrics:
+        - initialization_success
+        - parameter_count
 
-# Analysis Tasks
-analysis_task:
-  description: "Evaluate results and optimize performance"
+    - name: transfer_knowledge
+      description: Transfer knowledge from teacher to student
+      validation: true
+      metrics:
+        - transfer_accuracy
+        - knowledge_retention
+
+    - name: optimize_performance
+      description: Apply optimization techniques
+      validation: true
+      metrics:
+        - inference_speed
+        - memory_usage
+        - model_size
+
+    - name: validate_reasoning
+      description: Validate reasoning capabilities
+      validation: true
+      metrics:
+        - reasoning_accuracy
+        - task_performance
+
+performance_analysis:
+  description: Analyze and validate model performance
+  validation_required: true
   steps:
-    - name: "Metric Collection"
-      type: "action"
-      required: true
-      tools:
-        - "metric_analyze"
-        - "performance_track"
-    - name: "Performance Analysis"
-      type: "thought"
-      required: true
-      validation:
-        - "accuracy"
-        - "efficiency"
-    - name: "Optimization Planning"
-      type: "thought"
-      required: true
-      tools:
-        - "optimize_suggest"
+    - name: measure_metrics
+      description: Measure key performance metrics
+      validation: true
+      metrics:
+        - inference_latency
+        - memory_footprint
+        - throughput
+        - accuracy
 
-# Validation Rules
-validation_rules:
-  completeness:
-    description: "Ensure all required components are present"
-    threshold: 0.9
-  
-  logic:
-    description: "Verify logical consistency"
-    rules:
-      - "no_contradictions"
-      - "valid_inference"
-  
-  feasibility:
-    description: "Check if solution is implementable"
-    criteria:
-      - "resource_availability"
-      - "technical_feasibility"
-  
-  safety:
-    description: "Verify safety constraints"
-    checks:
-      - "input_validation"
-      - "error_handling"
-  
-  success:
-    description: "Verify successful execution"
-    metrics:
-      - "completion_status"
-      - "error_rate"
-  
+    - name: compare_baselines
+      description: Compare against baseline models
+      validation: true
+      metrics:
+        - relative_performance
+        - size_reduction
+        - speed_improvement
+
+    - name: identify_bottlenecks
+      description: Identify performance bottlenecks
+      validation: true
+      metrics:
+        - bottleneck_impact
+        - resource_utilization
+
+    - name: recommend_optimizations
+      description: Recommend optimization strategies
+      validation: true
+      metrics:
+        - optimization_impact
+        - implementation_feasibility
+
+validation_thresholds:
   accuracy:
-    description: "Measure result accuracy"
-    threshold: 0.95
-  
-  efficiency:
-    description: "Evaluate performance efficiency"
-    metrics:
-      - "response_time"
-      - "resource_usage"
-
-# Task Processing Settings
-settings:
-  default_task_type: "both"
-  max_retries: 3
-  timeout: 300
-  parallel_execution: false
-  logging:
-    level: "INFO"
-    format: "detailed"
-  metrics:
-    collect: true
-    store: true
-    analyze: true
+    min: 0.9
+    target: 0.95
+  latency:
+    max_ms: 100
+    target_ms: 50
+  memory:
+    max_mb: 1000
+    target_mb: 500
+  coverage:
+    min: 0.85
+    target: 0.95
