@@ -101,25 +101,34 @@ class NovaCache:
         except Exception as e:
             print(f"\nError saving cache: {e}\n")
 
-    async def _stream_response(self, response: str):
-        """Stream response with realistic but faster delays for cached content"""
+    async def _stream_response(self, response: str, stream_speed: str = 'normal'):
+        """Stream response with configurable speed"""
+        # Configure delays based on speed setting
+        if stream_speed == 'fast':
+            char_delay = (0.001, 0.002)  # 1-2ms between chars
+            chunk_delay = (0.02, 0.05)   # 20-50ms between chunks
+        elif stream_speed == 'slow':
+            char_delay = (0.03, 0.05)    # 30-50ms between chars
+            chunk_delay = (0.5, 1.0)     # 500ms-1s between chunks
+        else:  # normal
+            char_delay = (0.005, 0.01)   # 5-10ms between chars
+            chunk_delay = (0.05, 0.1)    # 50-100ms between chunks
+        
         # Split response into chunks (sentences or phrases)
         chunks = response.split('. ')
         for i, chunk in enumerate(chunks):
             if i > 0:  # Add period back except for last chunk
                 chunk = '. ' + chunk if i < len(chunks) - 1 else chunk
             
-            # Stream each character with minimal delay
+            # Stream each character with configured delay
             for char in chunk:
                 print(char, end='', flush=True)
-                # Very fast typing speed (5-10ms between chars)
-                await asyncio.sleep(random.uniform(0.005, 0.01))
+                await asyncio.sleep(random.uniform(*char_delay))
             
             if i < len(chunks) - 1:
-                # Brief pause between chunks (50-100ms)
-                await asyncio.sleep(random.uniform(0.05, 0.1))
+                await asyncio.sleep(random.uniform(*chunk_delay))
 
-    async def get_response(self, prompt: str) -> Optional[str]:
+    async def get_response(self, prompt: str, stream_speed: str = 'normal') -> Optional[str]:
         """Get cached response for prompt"""
         key = self._generate_key(prompt)
         
@@ -127,7 +136,7 @@ class NovaCache:
             self.metrics['hits'] += 1
             print(f"\nCache HIT for prompt: {prompt}\n")
             # Stream cached response
-            await self._stream_response(self._responses[key])
+            await self._stream_response(self._responses[key], stream_speed)
             return self._responses[key]
             
         self.metrics['misses'] += 1
@@ -139,6 +148,29 @@ class NovaCache:
         key = self._generate_key(prompt)
         self._responses[key] = response
         self._save_responses()
+
+    def clear_cache(self):
+        """Clear all cached responses"""
+        self._responses = {}
+        if self._responses_file.exists():
+            self._responses_file.unlink()
+        print("\nCache cleared successfully\n")
+
+    def get_cache_size(self) -> int:
+        """Get size of cache in bytes"""
+        if self._responses_file.exists():
+            return self._responses_file.stat().st_size
+        return 0
+
+    def get_cache_info(self) -> Dict[str, Any]:
+        """Get detailed cache information"""
+        return {
+            'size_bytes': self.get_cache_size(),
+            'num_entries': len(self._responses),
+            'cache_file': str(self._responses_file),
+            'encrypted': True,
+            **self.get_metrics()
+        }
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get cache performance metrics"""

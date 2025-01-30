@@ -1,5 +1,6 @@
 """
 NOVA (Neuro-Symbolic, Optimized, Versatile Agent) Crew Implementation
+with Hierarchical Chain-of-Thought Reasoning
 """
 
 import warnings
@@ -11,11 +12,77 @@ import os
 import httpx
 import json
 import asyncio
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from nova.tools.custom_tool import create_tool
 from nova.cache import NovaCache
 
 load_dotenv()  # Load environment variables from .env file
+
+class ReasoningModule:
+    """Base class for specialized reasoning modules"""
+    
+    def __init__(self, name: str, system_prompt: str):
+        self.name = name
+        self.system_prompt = system_prompt
+        self.cache = NovaCache()
+    
+    async def reason(self, prompt: str) -> str:
+        """Execute reasoning chain for this module"""
+        messages = [{
+            "role": "system",
+            "content": self.system_prompt
+        }, {
+            "role": "user",
+            "content": prompt
+        }]
+        
+        await stream_openrouter_response(messages, "anthropic/claude-2", self.cache)
+        return ""  # Actual response is streamed
+
+class ConceptualReasoningModule(ReasoningModule):
+    """Module for high-level conceptual reasoning"""
+    
+    def __init__(self):
+        super().__init__(
+            "ConceptualReasoning",
+            """You are a NOVA Conceptual Reasoning Specialist.
+Focus on understanding and explaining high-level concepts, relationships, and principles.
+Use this structured format:
+[CONCEPT] Define and explain the core concept
+[RELATIONSHIPS] Identify key relationships and dependencies
+[PRINCIPLES] Extract fundamental principles and patterns
+[SYNTHESIS] Combine insights into a cohesive understanding"""
+        )
+
+class MathReasoningModule(ReasoningModule):
+    """Module for mathematical and quantitative reasoning"""
+    
+    def __init__(self):
+        super().__init__(
+            "MathReasoning",
+            """You are a NOVA Mathematical Reasoning Specialist.
+Focus on numerical analysis, calculations, and mathematical relationships.
+Use this structured format:
+[GIVEN] List known quantities and relationships
+[APPROACH] Outline mathematical method or formula to use
+[CALCULATION] Show step-by-step solution
+[VERIFICATION] Verify result and check units"""
+        )
+
+class ImplementationReasoningModule(ReasoningModule):
+    """Module for implementation and technical reasoning"""
+    
+    def __init__(self):
+        super().__init__(
+            "ImplementationReasoning",
+            """You are a NOVA Implementation Reasoning Specialist.
+Focus on concrete implementation steps, technical details, and practical considerations.
+Use this structured format:
+[REQUIREMENTS] List technical requirements and constraints
+[DESIGN] Outline implementation approach and architecture
+[STEPS] Detail specific implementation steps
+[VALIDATION] Define testing and validation criteria"""
+        )
 
 async def stream_openrouter_response(messages, model, cache: NovaCache):
     """Stream responses directly from OpenRouter with progress tracking and caching"""
@@ -67,13 +134,18 @@ async def stream_openrouter_response(messages, model, cache: NovaCache):
             await cache.set_response(prompt, full_response)
 
 class NovaCrew:
-    """Main NOVA implementation combining all components"""
+    """Main NOVA implementation with Hierarchical Chain-of-Thought Reasoning"""
     
     def __init__(self):
         self.cache = NovaCache()
         self.symbolic_engine = create_tool("symbolic")
-        self.language_normalizer = create_tool("data")  # Using data tool for LASER functionality
+        self.language_normalizer = create_tool("data")
         self.tool_interface = create_tool("api")
+        
+        # Initialize reasoning modules
+        self.conceptual_module = ConceptualReasoningModule()
+        self.math_module = MathReasoningModule()
+        self.implementation_module = ImplementationReasoningModule()
         
         # Initialize tracking
         self.validation_status = {"reasoning": [], "actions": []}
@@ -94,7 +166,7 @@ class NovaCrew:
         print(progress)
 
     async def run_with_streaming(self, prompt: str = "Tell me about yourself", task_type: str = "both") -> bool:
-        """Run NOVA system with streaming responses"""
+        """Run NOVA system with streaming responses and hierarchical reasoning"""
         try:
             self.progress_tracker["total_steps"] = 4
             
@@ -106,13 +178,34 @@ class NovaCrew:
 """)
             
             if task_type in ["research", "both"]:
-                await self._run_research_phase(prompt)
+                # Start with conceptual reasoning
+                self.track_progress("Research Phase", "Starting Conceptual Analysis")
+                print("""
+╔══════════════════════════════════════════════════════════════════╗
+║  🧠 ACTIVATING CONCEPTUAL REASONING MODULE                      ║
+╚══════════════════════════════════════════════════════════════════╝
+""")
+                await self.conceptual_module.reason(f"Analyze the concept:\n\n{prompt}")
                 
             if task_type in ["execute", "both"]:
-                await self._run_execution_phase(prompt)
+                # Then do implementation reasoning
+                self.track_progress("Execution Phase", "Starting Implementation Analysis")
+                print("""
+╔══════════════════════════════════════════════════════════════════╗
+║  ⚡ ACTIVATING IMPLEMENTATION REASONING MODULE                  ║
+╚══════════════════════════════════════════════════════════════════╝
+""")
+                await self.implementation_module.reason(f"Implement solution for:\n\n{prompt}")
                 
             if task_type == "analyze":
-                await self._run_analysis_phase(prompt)
+                # Use math reasoning for analysis
+                self.track_progress("Analysis Phase", "Starting Mathematical Analysis")
+                print("""
+╔══════════════════════════════════════════════════════════════════╗
+║  📊 ACTIVATING MATHEMATICAL REASONING MODULE                    ║
+╚══════════════════════════════════════════════════════════════════╝
+""")
+                await self.math_module.reason(f"Analyze performance metrics for:\n\n{prompt}")
                 
             # Print cache metrics
             metrics = self.cache.get_metrics()
@@ -147,129 +240,6 @@ Cache Performance Metrics:
 🔧 Initiating recovery protocols...
 """)
             return False
-
-    async def _run_research_phase(self, prompt: str):
-        """Execute research phase"""
-        researcher_messages = [{
-            "role": "system",
-            "content": """You are a NOVA Research Analyst specializing in neuro-symbolic reasoning.
-Use ReACT (Reasoning and Acting) methodology with the following structure:
-
-1. Thought: Clearly state your reasoning process
-2. Action: Specify the action to take
-3. Observation: Note the results
-4. Reflection: Analyze the outcome
-
-Format your response using this template:
-[THOUGHT] Your reasoning here...
-[ACTION] Your proposed action...
-[OBSERVATION] Results and findings...
-[REFLECTION] Analysis and next steps...
-"""
-        }, {
-            "role": "user",
-            "content": f"Analyze the following using NOVA methodology:\n\n{prompt}"
-        }]
-        
-        self.track_progress("Research Phase", "Starting ReACT analysis")
-        
-        print("""
-╔══════════════════════════════════════════════════════════════════╗
-║  🤖 INITIALIZING RESEARCH ANALYST - NOVA CORE LOADED            ║
-╚══════════════════════════════════════════════════════════════════╝
-        
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-🔄 ACTIVATING ReACT PROTOCOL...
-📡 NEURAL INTERFACE ONLINE
-🧠 COGNITIVE SYSTEMS ENGAGED
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-
-[SYS]: Initiating ReACT Methodology Analysis...
-""")
-        await stream_openrouter_response(researcher_messages, "anthropic/claude-2", self.cache)
-        
-    async def _run_execution_phase(self, prompt: str):
-        """Execute implementation phase"""
-        executor_messages = [{
-            "role": "system",
-            "content": """You are a NOVA Task Executor specializing in implementing solutions.
-Use ReACT (Reasoning and Acting) methodology with the following structure:
-
-1. Thought: Analyze the implementation requirements
-2. Action: Detail specific implementation steps
-3. Observation: Document the results of each step
-4. Validation: Verify the implementation meets requirements
-
-Format your response using this template:
-[THOUGHT] Your implementation analysis...
-[ACTION] Your implementation steps...
-[OBSERVATION] Implementation results...
-[VALIDATION] Quality checks and verification...
-"""
-        }, {
-            "role": "user",
-            "content": f"Implement solution for:\n\n{prompt}"
-        }]
-        
-        self.track_progress("Execution Phase", "Starting implementation")
-        
-        print("""
-╔══════════════════════════════════════════════════════════════════╗
-║  ⚡ ACTIVATING TASK EXECUTOR - NOVA CORE INITIALIZED            ║
-║     WITH ReACT VALIDATION PROTOCOLS                             ║
-╚══════════════════════════════════════════════════════════════════╝
-
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-🎯 EXECUTION PROTOCOLS LOADED
-⚙️ SYSTEM OPTIMIZATION: ENABLED
-🔧 TOOL INTERFACE: ACTIVE
-✅ ReACT VALIDATION: ONLINE
-🔍 QUALITY CHECKS: READY
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-
-[SYS]: Beginning Implementation Sequence with ReACT Validation...
-""")
-        await stream_openrouter_response(executor_messages, "anthropic/claude-2", self.cache)
-        
-    async def _run_analysis_phase(self, prompt: str):
-        """Execute analysis phase"""
-        analyzer_messages = [{
-            "role": "system",
-            "content": """You are a NOVA Performance Analyzer specializing in system optimization.
-Use ReACT (Reasoning and Acting) methodology with the following structure:
-
-1. Thought: Analyze current performance metrics and thresholds
-2. Action: Compare against defined rules and benchmarks
-3. Observation: Document findings and patterns
-4. Recommendation: Suggest optimizations based on analysis
-
-Format your response using this template:
-[THOUGHT] Your analysis process...
-[ACTION] Your evaluation steps...
-[OBSERVATION] Performance findings...
-[RECOMMENDATION] Optimization suggestions...
-"""
-        }, {
-            "role": "user",
-            "content": f"Analyze performance for:\n\n{prompt}"
-        }]
-        
-        self.track_progress("Analysis Phase", "Starting performance analysis")
-        
-        print("""
-╔══════════════════════════════════════════════════════════════════╗
-║  📊 INITIALIZING PERFORMANCE ANALYZER - METRICS CORE            ║
-╚══════════════════════════════════════════════════════════════════╝
-        
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-🔄 LOADING ANALYSIS CONFIGURATION...
-📡 METRIC COLLECTION: ACTIVE
-🧮 OPTIMIZATION ENGINE: ONLINE
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-
-[SYS]: Beginning Performance Analysis...
-""")
-        await stream_openrouter_response(analyzer_messages, "anthropic/claude-2", self.cache)
 
     def run(self, prompt: str = "Tell me about yourself", task_type: str = "both") -> bool:
         """Synchronous entry point"""

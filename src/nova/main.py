@@ -1,38 +1,70 @@
 """
-NOVA (Neuro-Symbolic, Optimized, Versatile Agent) CLI Entry Point
+NOVA CLI Entry Point
 """
 
-import warnings
-warnings.filterwarnings('ignore', category=UserWarning)
-
 import argparse
+import asyncio
 from nova.crew import NovaCrew
+from nova.cache import NovaCache
 
-# ANSI color codes
-MAGENTA = '\033[0;35m'
-RED = '\033[0;31m'
-NC = '\033[0m'  # No Color
+def format_size(size_bytes: int) -> str:
+    """Format size in bytes to human readable format"""
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size_bytes < 1024:
+            return f"{size_bytes:.2f} {unit}"
+        size_bytes /= 1024
+    return f"{size_bytes:.2f} TB"
 
-def display_banner():
+def main():
+    parser = argparse.ArgumentParser(description='NOVA (Neuro-Symbolic Optimized Versatile Agent)')
+    
+    # Task options
+    parser.add_argument('--prompt', type=str, default="Tell me about yourself",
+                      help='The prompt to process')
+    parser.add_argument('--task', type=str, choices=['research', 'execute', 'analyze', 'both'],
+                      default='both', help='Type of task to perform')
+    
+    # Cache management options
+    cache_group = parser.add_argument_group('Cache Management')
+    cache_group.add_argument('--clear-cache', action='store_true',
+                          help='Clear the response cache')
+    cache_group.add_argument('--cache-info', action='store_true',
+                          help='Show cache information')
+    cache_group.add_argument('--stream-speed', type=str,
+                          choices=['fast', 'normal', 'slow'], default='normal',
+                          help='Speed of response streaming')
+    
+    args = parser.parse_args()
+    
+    # Handle cache management commands
+    cache = NovaCache()
+    
+    if args.clear_cache:
+        cache.clear_cache()
+        print("Cache cleared successfully")
+        return
+        
+    if args.cache_info:
+        info = cache.get_cache_info()
+        print("\nNOVA Cache Information:")
+        print("----------------------")
+        print(f"Cache Size: {format_size(info['size_bytes'])}")
+        print(f"Number of Entries: {info['num_entries']}")
+        print(f"Cache File: {info['cache_file']}")
+        print(f"Encrypted: {'Yes' if info['encrypted'] else 'No'}")
+        print(f"Hit Rate: {info['hit_rate']:.2f}%")
+        print(f"Cache Hits: {info['hits']}")
+        print(f"Cache Misses: {info['misses']}")
+        return
+    
+    # Initialize NOVA system
     print("""
 ╔══════════════════════════════════════════════════════════════════╗
 ║                    NOVA ORCHESTRATION SYSTEM                     ║
 ║        [ NEURO-SYMBOLIC OPTIMIZED VERSATILE AGENT v2.0 ]        ║
 ╚══════════════════════════════════════════════════════════════════╝
-""")
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='NOVA Neural Orchestration System')
-    parser.add_argument('--prompt', type=str, help='Prompt for the AI system', default="Tell me about yourself")
-    parser.add_argument('--task', type=str, choices=['research', 'execute', 'analyze', 'both'], 
-                       help='Task to perform: research, execute, analyze, or both', default='both')
-    return parser.parse_args()
 
-def run():
-    args = parse_args()
-    display_banner()
-    
-    print("""
 ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
 🔄 INITIALIZING NOVA CORE SYSTEMS...
 📡 NEURAL INTERFACE: ONLINE
@@ -42,34 +74,21 @@ def run():
 ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
 """)
     
-    crew = NovaCrew()
-    result = crew.run(prompt=args.prompt, task_type=args.task)
-    
-    if result:
-        print("""
-╔══════════════════════════════════════════════════════════════════╗
-║                🌟 NOVA EXECUTION COMPLETE 🌟                     ║
-╚══════════════════════════════════════════════════════════════════╝
-
-""" + MAGENTA + """▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-        ✨ ALL OBJECTIVES ACHIEVED
-        📊 PERFORMANCE METRICS OPTIMAL
-        🔒 SYSTEM INTEGRITY MAINTAINED
-        🌐 KNOWLEDGE BASE UPDATED
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀""" + NC + """
-        """)
-    else:
+    nova = NovaCrew()
+    try:
+        nova.run(prompt=args.prompt, task_type=args.task)
+    except KeyboardInterrupt:
         print("""
 ╔══════════════════════════════════════════════════════════════════╗
 ║             ⚠️ NOVA EXECUTION INTERRUPTED ⚠️                    ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-""" + RED + """▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
         🔍 DIAGNOSTIC SCAN INITIATED
         💫 QUANTUM STATE PRESERVED
         🔄 READY FOR REACTIVATION
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀""" + NC + """
-        """)
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+""")
 
-if __name__ == "__main__":
-    run()
+if __name__ == '__main__':
+    main()
