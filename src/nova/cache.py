@@ -1,5 +1,5 @@
 """
-NOVA Cache Implementation for LLM Response Caching
+NOVA Cache Implementation for LLM Response Caching with Encryption
 """
 
 import hashlib
@@ -10,14 +10,20 @@ import asyncio
 import random
 from typing import Optional, Dict, Any
 from pathlib import Path
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import base64
 
 class NovaCache:
     """Cache manager for NOVA system"""
     
     _instance = None
     _cache_dir = Path(__file__).parent / '.cache'
-    _responses_file = _cache_dir / 'responses.json'
+    _responses_file = _cache_dir / 'responses.enc'
+    _key_file = _cache_dir / '.key'
     _responses: Dict[str, str] = {}
+    _fernet = None
     
     def __new__(cls):
         if cls._instance is None:
@@ -30,11 +36,16 @@ class NovaCache:
             # Create cache directory if it doesn't exist
             self._cache_dir.mkdir(parents=True, exist_ok=True)
             
+            # Initialize encryption
+            self._init_encryption()
+            
             # Load cached responses if file exists
             if self._responses_file.exists():
                 try:
-                    with self._responses_file.open('r') as f:
-                        self._responses = json.load(f)
+                    with self._responses_file.open('rb') as f:
+                        encrypted_data = f.read()
+                        decrypted_data = self._fernet.decrypt(encrypted_data)
+                        self._responses = json.loads(decrypted_data)
                     print(f"\nLoaded {len(self._responses)} cached responses\n")
                 except Exception as e:
                     print(f"\nError loading cache: {e}\n")
@@ -46,6 +57,30 @@ class NovaCache:
                 'misses': 0
             }
 
+    def _init_encryption(self):
+        """Initialize encryption key and Fernet instance"""
+        if self._key_file.exists():
+            # Load existing key
+            with self._key_file.open('rb') as f:
+                key = f.read()
+        else:
+            # Generate new key
+            salt = os.urandom(16)
+            kdf = PBKDF2HMAC(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=salt,
+                iterations=100000,
+            )
+            # Use a random password or environment variable
+            password = os.getenv('NOVA_CACHE_KEY', os.urandom(32).hex()).encode()
+            key = base64.urlsafe_b64encode(kdf.derive(password))
+            # Save key
+            with self._key_file.open('wb') as f:
+                f.write(key)
+        
+        self._fernet = Fernet(key)
+
     def _generate_key(self, prompt: str) -> str:
         """Generate cache key from prompt"""
         # Normalize prompt
@@ -54,11 +89,15 @@ class NovaCache:
         return hashlib.sha256(normalized.encode()).hexdigest()
 
     def _save_responses(self):
-        """Save responses to file"""
+        """Save encrypted responses to file"""
         try:
-            with self._responses_file.open('w') as f:
-                json.dump(self._responses, f, indent=2)
-            print(f"\nSaved {len(self._responses)} responses to cache\n")
+            # Encrypt responses before saving
+            data = json.dumps(self._responses)
+            encrypted_data = self._fernet.encrypt(data.encode())
+            
+            with self._responses_file.open('wb') as f:
+                f.write(encrypted_data)
+            print(f"\nSaved {len(self._responses)} encrypted responses to cache\n")
         except Exception as e:
             print(f"\nError saving cache: {e}\n")
 
