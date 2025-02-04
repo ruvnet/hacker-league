@@ -1,0 +1,156 @@
+# Task Configurations
+
+diagnostic_tasks:
+  diagnosis:
+    description: "Primary diagnostic analysis of medical case"
+    required_agents:
+      - medical_expert
+      - image_analyst
+    tools:
+      - image_analysis
+      - report_analysis
+      - knowledge_base
+    inputs:
+      - image_path
+      - report_text
+      - genomic_data
+    validation:
+      confidence_threshold: 0.85
+      require_evidence: true
+      require_measurements: true
+      min_findings: 2
+    output_format:
+      - diagnosis
+      - confidence
+      - evidence
+      - recommendations
+
+  pathology_review:
+    description: "Detailed pathology analysis"
+    required_agents:
+      - medical_expert
+      - genomics_expert
+    tools:
+      - image_analysis
+      - knowledge_base
+    inputs:
+      - pathology_image
+      - clinical_history
+      - molecular_data
+    validation:
+      confidence_threshold: 0.90
+      require_evidence: true
+      require_measurements: true
+    output_format:
+      - diagnosis
+      - grade
+      - stage
+      - molecular_features
+
+  radiology_review:
+    description: "Detailed radiology analysis"
+    required_agents:
+      - medical_expert
+      - image_analyst
+    tools:
+      - image_analysis
+      - report_analysis
+    inputs:
+      - image_series
+      - prior_studies
+      - clinical_history
+    validation:
+      confidence_threshold: 0.90
+      require_measurements: true
+      require_annotations: true
+    output_format:
+      - findings
+      - measurements
+      - comparison
+      - impression
+
+genomic_tasks:
+  variant_analysis:
+    description: "Analysis of genomic variants"
+    required_agents:
+      - genomics_expert
+      - medical_expert
+    tools:
+      - knowledge_base
+    inputs:
+      - variant_data
+      - clinical_context
+    validation:
+      confidence_threshold: 0.85
+      require_evidence: true
+      require_citations: true
+    output_format:
+      - variants
+      - significance
+      - recommendations
+
+  expression_analysis:
+    description: "Gene expression analysis"
+    required_agents:
+      - genomics_expert
+    tools:
+      - knowledge_base
+    inputs:
+      - expression_data
+      - pathway_data
+    validation:
+      confidence_threshold: 0.85
+      require_evidence: true
+    output_format:
+      - pathways
+      - expression_levels
+      - significance
+
+tool_configs:
+  image_analysis:
+    supported_formats:
+      - DICOM
+      - NIfTI
+      - PNG
+      - JPEG
+    features:
+      - segmentation
+      - measurement
+      - feature_extraction
+    validation:
+      min_confidence: 0.85
+      require_calibration: true
+
+  report_analysis:
+    supported_formats:
+      - text
+      - PDF
+      - HL7
+    features:
+      - entity_extraction
+      - relation_mapping
+      - temporal_analysis
+    validation:
+      min_confidence: 0.80
+      require_structured_output: true
+
+  knowledge_base:
+    sources:
+      - medical_literature
+      - clinical_guidelines
+      - drug_database
+    features:
+      - evidence_lookup
+      - guideline_matching
+      - drug_interaction
+    validation:
+      require_citations: true
+      max_age_months: 12
+
+# Global validation settings
+validation_defaults:
+  confidence_threshold: 0.85
+  require_evidence: true
+  max_uncertainty: 0.15
+  min_agreement: 0.80
+  timeout_seconds: 30

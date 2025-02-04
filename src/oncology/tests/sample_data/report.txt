@@ -1,0 +1,35 @@
+Clinical History:
+65-year-old male with suspicious lung mass found on screening CT.
+
+Past Medical History:
+- 40 pack-year smoking history
+- Hypertension
+- Type 2 Diabetes
+
+Current Symptoms:
+- Chronic cough for 3 months
+- Weight loss of 10 pounds in 2 months
+- No hemoptysis
+
+Imaging Findings:
+2.5 cm spiculated mass in right upper lobe, anterior segment.
+No mediastinal lymphadenopathy.
+No pleural effusion.
+Multiple small pulmonary nodules bilaterally, largest 4mm.
+
+Laboratory Results:
+- CBC within normal limits
+- Basic metabolic panel unremarkable
+- CEA elevated at 15.2 ng/mL (normal < 5.0)
+
+Impression:
+1. Right upper lobe spiculated mass highly concerning for primary lung malignancy
+2. Multiple small pulmonary nodules suspicious for metastatic disease
+3. Recommend PET/CT for staging
+4. Consider CT-guided biopsy for tissue diagnosis
+
+Plan:
+1. Pulmonary consultation
+2. PET/CT scheduling
+3. Smoking cessation counseling
+4. Follow-up in one week to review results and plan biopsy

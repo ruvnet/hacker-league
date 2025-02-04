@@ -1,0 +1,84 @@
+# OpenRouter LLM Models Configuration
+
+medical_expert:
+  llm: "anthropic/claude-3-opus-20240229"
+  role: "Medical Expert"
+  description: "Expert in medical diagnosis and clinical interpretation"
+  temperature: 0.3
+  max_tokens: 2000
+  context_window: 100000
+  capabilities:
+    - clinical_analysis
+    - diagnostic_reasoning
+    - treatment_planning
+  validation:
+    confidence_threshold: 0.85
+    require_evidence: true
+    require_references: true
+
+image_analyst:
+  llm: "anthropic/claude-3-opus-20240229"
+  role: "Image Analysis Expert"
+  description: "Expert in medical imaging interpretation"
+  temperature: 0.2
+  max_tokens: 1500
+  context_window: 100000
+  capabilities:
+    - image_interpretation
+    - measurement_analysis
+    - feature_detection
+  validation:
+    confidence_threshold: 0.90
+    require_measurements: true
+    require_annotations: true
+
+genomics_expert:
+  llm: "anthropic/claude-3-opus-20240229"
+  role: "Genomics Expert"
+  description: "Expert in genomic data interpretation"
+  temperature: 0.3
+  max_tokens: 2000
+  context_window: 100000
+  capabilities:
+    - variant_analysis
+    - pathway_analysis
+    - drug_response_prediction
+  validation:
+    confidence_threshold: 0.85
+    require_evidence: true
+    require_citations: true
+
+system_coordinator:
+  llm: "anthropic/claude-3-opus-20240229"
+  role: "System Coordinator"
+  description: "Coordinates analysis and synthesizes results"
+  temperature: 0.4
+  max_tokens: 2500
+  context_window: 100000
+  capabilities:
+    - result_synthesis
+    - conflict_resolution
+    - recommendation_generation
+  validation:
+    confidence_threshold: 0.80
+    require_consensus: true
+    require_summary: true
+
+# Model defaults
+defaults:
+  temperature: 0.3
+  max_tokens: 2000
+  top_p: 0.95
+  frequency_penalty: 0.0
+  presence_penalty: 0.0
+  stop_sequences: []
+  timeout_seconds: 30
+  retry_attempts: 3
+  retry_delay_seconds: 1
+
+# Validation defaults
+validation_defaults:
+  confidence_threshold: 0.85
+  require_evidence: true
+  max_uncertainty: 0.15
+  min_agreement: 0.80

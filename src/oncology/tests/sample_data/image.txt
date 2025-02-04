@@ -1,0 +1,98 @@
+{
+    "metadata": {
+        "modality": "CT",
+        "study_date": "2024-02-04",
+        "patient_position": "HFS",
+        "slice_thickness": 1.5,
+        "pixel_spacing": [0.7, 0.7],
+        "manufacturer": "Test Scanner",
+        "software_version": "v1.0"
+    },
+    "dimensions": {
+        "width": 512,
+        "height": 512,
+        "slices": 200,
+        "voxel_size": [0.7, 0.7, 1.5]
+    },
+    "findings": {
+        "primary_lesion": {
+            "location": {
+                "lobe": "RUL",
+                "segment": "anterior",
+                "coordinates": [256, 128, 75]
+            },
+            "characteristics": {
+                "size_mm": 25,
+                "shape": "spiculated",
+                "density": "solid",
+                "margins": "irregular",
+                "calcification": "absent",
+                "cavitation": "absent",
+                "enhancement": "heterogeneous"
+            },
+            "measurements": {
+                "long_axis_mm": 25,
+                "short_axis_mm": 22,
+                "volume_cc": 4.8,
+                "mean_hu": 35,
+                "max_hu": 65
+            }
+        },
+        "additional_findings": [
+            {
+                "type": "nodule",
+                "location": {
+                    "lobe": "RLL",
+                    "coordinates": [300, 200, 100]
+                },
+                "size_mm": 4,
+                "characteristics": {
+                    "shape": "round",
+                    "density": "solid"
+                }
+            },
+            {
+                "type": "nodule",
+                "location": {
+                    "lobe": "LUL",
+                    "coordinates": [200, 150, 80]
+                },
+                "size_mm": 3,
+                "characteristics": {
+                    "shape": "round",
+                    "density": "solid"
+                }
+            }
+        ]
+    },
+    "technical_parameters": {
+        "kVp": 120,
+        "mAs": 150,
+        "reconstruction_kernel": "standard",
+        "window_center": 40,
+        "window_width": 400,
+        "dose_report": {
+            "ctdi_vol": 15.2,
+            "dlp": 450
+        }
+    },
+    "analysis_results": {
+        "lung_rads_category": "4B",
+        "malignancy_risk_score": 0.85,
+        "volume_doubling_time_days": null,
+        "ai_findings": {
+            "detection_confidence": 0.92,
+            "malignancy_probability": 0.88,
+            "radiomics_features": {
+                "shape_features": {
+                    "sphericity": 0.72,
+                    "compactness": 0.68
+                },
+                "texture_features": {
+                    "entropy": 5.2,
+                    "homogeneity": 0.45
+                }
+            }
+        }
+    }
+}
