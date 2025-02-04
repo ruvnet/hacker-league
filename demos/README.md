@@ -1,138 +1,73 @@
-# Agent Demos
+# Oncology System CLI Demo Scripts
 
-This directory contains example agents that demonstrate various capabilities of the agent system.
+This directory contains example shell scripts demonstrating various features of the Oncology System CLI.
 
 ## Available Demos
 
-### 1. Echo Agent
-A simple agent that demonstrates basic message handling and formatting.
-- Text transformation (uppercase, lowercase, title case)
-- Message repetition
-- Formatted output
+### 1. Knowledge Base Management (`kb_demo.sh`)
+Demonstrates:
+- Processing drug label documents
+- Querying the knowledge base
+- Viewing knowledge base statistics
 
 ```bash
-python3 echo_agent.py
+chmod +x kb_demo.sh
+./kb_demo.sh
 ```
 
-### 2. Weather Agent
-Demonstrates API integration and data processing capabilities.
-- HTTP request handling
-- Data transformation
-- Unit conversion
-- Formatted weather reports
+### 2. Genomic Data Processing (`genomic_demo.sh`)
+Demonstrates:
+- Processing genomic data files (VCF and expression data)
+- Analyzing processed genomic data
+- Harmonizing genomic data
+- Running various bioinformatics analyses (pathway, expression, correlation)
 
 ```bash
-python3 weather_agent.py
+chmod +x genomic_demo.sh
+./genomic_demo.sh
 ```
 
-### 3. Stock Agent
-Shows real-time data handling and technical analysis capabilities.
-- Historical data processing
-- Technical indicators calculation:
-  - Simple Moving Averages (SMA)
-  - Relative Strength Index (RSI)
-  - Bollinger Bands
-- Trend analysis and signals
-- Formatted market reports
+### 3. Medical Document Processing (`doc_demo.sh`)
+Demonstrates:
+- Extracting information from clinical reports
+- Processing document references
+- Generating analysis reports
+- Processing medical image data
+- Creating comprehensive medical reports
 
 ```bash
-python3 stock_agent.py
+chmod +x doc_demo.sh
+./doc_demo.sh
 ```
 
-### 4. News Agent
-Demonstrates text processing and sentiment analysis capabilities.
-- News article generation
-- Sentiment analysis
-- Topic extraction
-- Trend analysis
-- Formatted news reports
+## Prerequisites
 
+1. Make sure you have the Oncology System installed and configured:
 ```bash
-python3 news_agent.py
+pip install -r requirements.txt
 ```
 
-## Common Features
+2. Required data files should be present in their respective directories:
+- `data/knowledge_base/drug_labels/` - Drug label documents
+- `data/bio_analysis/` - Genomic and expression data files
+- `data/harmonized/variants/` - Variant data files
+- `src/oncology/tests/sample_data/` - Sample medical documents
 
-Each agent demonstrates these core capabilities:
-- Async/await pattern
-- Error handling
-- Logging
-- Data validation
-- Formatted output
-- Progress tracking
-
-## Output Formatting
-
-All agents use a consistent output format with:
-- Box-style headers
-- Clear section organization
-- Emoji indicators
-- Color-coded status
-- Timestamp information
-
-## Running the Demos
-
-1. Make sure you have the required dependencies:
+3. Make the scripts executable:
 ```bash
-pip install aiohttp
+chmod +x demos/*.sh
 ```
 
-2. Run any demo directly:
-```bash
-python3 demos/[agent_name].py
-```
+## Usage Notes
 
-## Example Output
+- These scripts are designed to run from the project root directory
+- Each script includes descriptive comments explaining the operations
+- Scripts will create output directories as needed
+- Check the console output for progress and any error messages
 
-### Echo Agent
-```
-╔══════════════════════════════════════════════════════════════════╗
-║  Echo Agent Demo - Style: uppercase
-╚══════════════════════════════════════════════════════════════════╝
+## Output Locations
 
-Original: Hello, World!
-Formatted:
-HELLO, WORLD!
-```
-
-### Weather Agent
-```
-╔══════════════════════════════════════════════════════════════════╗
-║  🌤️  Weather Report - London, UK
-╚══════════════════════════════════════════════════════════════════╝
-
-📍 Location:
-  • Coordinates: 51.5074°N, 0.1278°E
-...
-```
-
-### Stock Agent
-```
-╔══════════════════════════════════════════════════════════════════╗
-║  📊 Stock Analysis - AAPL
-╚══════════════════════════════════════════════════════════════════╝
-
-💰 Price Information:
-  • Current Price: $150.25
-  • 24h Change: +2.35%
-...
-```
-
-### News Agent
-```
-╔══════════════════════════════════════════════════════════════════╗
-║  📰 News Analysis - GOOGL
-╚══════════════════════════════════════════════════════════════════╝
-
-📊 Summary:
-  • Period: Last 7 days
-  • Articles Analyzed: 10
-...
-```
-
-## Notes
-
-- These demos use mock data and simulated APIs for demonstration purposes
-- In a production environment, replace mock data with real API calls
-- API keys in the demos are placeholders
-- Error handling demonstrates best practices for production use
+- Knowledge base data: `data/knowledge_base/`
+- Processed genomic data: `data/processed/`
+- Harmonized genomic data: `data/harmonized_output/`
+- Generated reports: `reports/`
