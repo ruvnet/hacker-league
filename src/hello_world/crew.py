@@ -46,9 +46,9 @@ async def stream_openrouter_response(messages, model, progress_callback=None):
 
 class HelloWorldCrew:
     def __init__(self):
-        with open('src/hello_world/config/agents.yaml', 'r') as f:
+        with open('config/agents.yaml', 'r') as f:
             self.agents_config = yaml.safe_load(f)
-        with open('src/hello_world/config/tasks.yaml', 'r') as f:
+        with open('config/tasks.yaml', 'r') as f:
             self.tasks_config = yaml.safe_load(f)
         self.validation_status = {"reasoning": [], "actions": []}
         self.progress_tracker = {"current_step": 0, "total_steps": 0, "status": ""}
@@ -119,7 +119,7 @@ class HelloWorldCrew:
             
     async def _run_analyzer(self, prompt):
         """Run the analyzer agent"""
-        with open('src/hello_world/config/analysis.yaml', 'r') as f:
+        with open('config/analysis.yaml', 'r') as f:
             analysis_config = yaml.safe_load(f)
             
         analyzer_messages = [{

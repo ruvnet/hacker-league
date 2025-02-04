@@ -4,8 +4,8 @@ from langchain.tools import BaseTool
 class CustomTool(BaseTool):
     """A custom tool template that can be extended for specific use cases."""
     
-    name = "custom_tool"
-    description = "A custom tool that can be implemented for specific tasks"
+    name: str = "custom_tool"
+    description: str = "A custom tool that can be implemented for specific tasks"
 
     def _run(self, query: str) -> Any:
         """Use the tool.
