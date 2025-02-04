@@ -108,7 +108,7 @@ class DocCommands:
             module = load_script(str(self.scripts_dir / 'medical_knowledge_agent.py'))
             if module:
                 agent = module.MedicalKnowledgeAgent(self.kb_dir)
-                result = agent.extract_information(input_path, doc_type)
+                result = agent.process_document(input_path, doc_type)
                 print(format_success("Extraction complete:"))
                 print(json.dumps(result, indent=2))
         except Exception as e:

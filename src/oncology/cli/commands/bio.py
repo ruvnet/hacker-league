@@ -95,11 +95,35 @@ class BioCommands:
             module = load_script(str(self.scripts_dir / 'bioinformatics_agent.py'))
             if module:
                 agent = module.BioinformaticsAgent(self.bio_dir)
+                # Read genes from CSV
                 with open(genes_file) as f:
-                    genes = f.read().strip().split('\n')
+                    import pandas as pd
+                    genes_df = pd.read_csv(genes_file)
+                    genes = genes_df.iloc[:, 0].tolist()  # Use first column as gene list
+                    # Create all possible gene pairs for correlation
+                    gene_pairs = [(genes[i], genes[j]) 
+                                for i in range(len(genes)) 
+                                for j in range(i+1, len(genes))]
+
+                # Read pathways from CSV
                 with open(pathways_file) as f:
-                    pathways = json.load(f)
-                result = agent.analyze_pathways(genes, pathways)
+                    pathways_df = pd.read_csv(pathways_file)
+                    # Convert DataFrame to expected format
+                    pathways = {
+                        row['pathway_id']: {
+                            'genes': [g.strip() for g in row['genes'].split(',')],
+                            'description': row['description']
+                        }
+                        for _, row in pathways_df.iterrows()
+                    }
+
+                result = agent.analyze_data(
+                    expression_path=genes_file,  # Use genes file as expression data
+                    pathway_db=pathways,
+                    gene_pairs=gene_pairs,
+                    group1_samples=[],
+                    group2_samples=[]
+                )
                 print(format_success("Analysis complete:"))
                 print(json.dumps(result, indent=2))
         except Exception as e:

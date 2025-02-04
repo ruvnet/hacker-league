@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Medical Knowledge Processing Agent using ReAct Architecture
 
@@ -11,6 +10,9 @@ This agent processes medical documents and knowledge using a ReAct approach:
 import json
 import yaml
 from pathlib import Path
+from typing import Dict, List, Any, Optional
+from dataclasses import dataclass
+from datetime import datetime
 
 # ANSI color codes for clinical formatting
 class Colors:
@@ -35,29 +37,6 @@ class Emojis:
     CLOCK = "⏱️"            # Time/Duration
     CHART = "📊"            # Data/Statistics
     LINK = "🔗"             # Reference/Link
-
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
-from datetime import datetime
-
-@dataclass
-class MedicalEntity:
-    """Medical concept with standardized coding"""
-    id: str
-    name: str
-    type: str  # disease, drug, gene, etc.
-    codes: Dict[str, str]  # SNOMED, ICD, etc.
-    evidence: List[str]  # references supporting this entity
-
-@dataclass
-class ClinicalGuideline:
-    """Represents a clinical guideline or rule"""
-    id: str
-    condition: str
-    recommendation: str
-    evidence_level: str  # A, B, C, etc.
-    source: str
-    last_updated: datetime
 
 class Tool:
     """Base class for medical knowledge tools"""
@@ -85,6 +64,7 @@ class DrugLabelTool(Tool):
             
             # Extract key sections
             data = {
+                'type': 'Drug Label',
                 'name': root.find('name').text,
                 'indications': [
                     ind.text for ind in root.findall('.//indication')
@@ -124,8 +104,6 @@ class GuidelineTool(Tool):
     def __call__(self, text: str) -> Dict[str, Any]:
         try:
             # Extract structured info from guideline text
-            # In real system: Use NLP to identify conditions, recommendations
-            # For demo: Simple rule extraction
             import re
             
             # Look for patterns like "If X, then Y"
@@ -150,12 +128,15 @@ class GuidelineTool(Tool):
             evidence_match = evidence_pattern.search(text)
             evidence_level = evidence_match.group(1) if evidence_match else None
             
+            data = {
+                'type': 'Clinical Guideline',
+                'rules': rules,
+                'evidence_level': evidence_level
+            }
+            
             return {
                 'success': True,
-                'data': {
-                    'rules': rules,
-                    'evidence_level': evidence_level
-                },
+                'data': data,
                 'error': None
             }
         except Exception as e:
@@ -176,7 +157,6 @@ class TrialResultsTool(Tool):
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
         try:
             # Process trial data
-            # Extract p-values, confidence intervals, etc.
             outcomes = []
             for outcome in data.get('outcomes', []):
                 processed = {
@@ -187,16 +167,91 @@ class TrialResultsTool(Tool):
                 }
                 outcomes.append(processed)
             
+            result_data = {
+                'type': 'Clinical Trial',
+                'trial_id': data.get('id'),
+                'outcomes': outcomes,
+                'significance': any(
+                    o.get('p_value', 1.0) < 0.05 
+                    for o in outcomes
+                )
+            }
+            
             return {
                 'success': True,
-                'data': {
-                    'trial_id': data.get('id'),
-                    'outcomes': outcomes,
-                    'significance': any(
-                        o.get('p_value', 1.0) < 0.05 
-                        for o in outcomes
-                    )
-                },
+                'data': result_data,
+                'error': None
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'data': None,
+                'error': str(e)
+            }
+
+class ReportTool(Tool):
+    """Process clinical reports"""
+    def __init__(self):
+        super().__init__(
+            name="report_processor",
+            description="Extract information from clinical reports"
+        )
+    
+    def __call__(self, text: str) -> Dict[str, Any]:
+        try:
+            # Extract structured info from report text
+            import re
+            
+            # Extract sections
+            sections = {}
+            current_section = None
+            lines = []
+            
+            for line in text.split('\n'):
+                line = line.strip()
+                if not line:
+                    continue
+                
+                if line.endswith(':'):
+                    if current_section and lines:
+                        sections[current_section] = '\n'.join(lines).strip()
+                    current_section = line.strip()[:-1]
+                    lines = []
+                elif current_section:
+                    lines.append(line)
+            
+            if current_section and lines:
+                sections[current_section] = '\n'.join(lines).strip()
+            
+            # Extract specific data points
+            data = {
+                'type': 'Clinical Report',
+                'sections': sections or {},
+                'findings': [],
+                'measurements': []
+            }
+            
+            # Extract findings
+            if 'Imaging Findings' in sections:
+                findings = sections['Imaging Findings'].split('\n')
+                data['findings'] = [f.strip() for f in findings if f.strip()]
+            
+            # Extract measurements
+            measurements = []
+            measurement_pattern = re.compile(r'(\d+(?:\.\d+)?)\s*(?:mm|cm|x)')
+            for finding in data['findings']:
+                matches = measurement_pattern.finditer(finding)
+                for match in matches:
+                    measurements.append({
+                        'value': float(match.group(1)),
+                        'unit': match.group().replace(match.group(1), '').strip(),
+                        'context': finding
+                    })
+            data['measurements'] = measurements
+            
+            return {
+                'success': True,
+                'data': data,
                 'error': None
             }
         except Exception as e:
@@ -286,6 +341,7 @@ class MedicalKnowledgeAgent:
             'drug_label': DrugLabelTool(),
             'guideline': GuidelineTool(),
             'trial': TrialResultsTool(),
+            'report': ReportTool(),
             'validator': KnowledgeValidationTool()
         }
         
@@ -312,6 +368,9 @@ class MedicalKnowledgeAgent:
         elif doc_type == 'trial':
             with open(doc_path) as f:
                 result = self.tools['trial'](json.load(f))
+        elif doc_type == 'report':
+            with open(doc_path) as f:
+                result = self.tools['report'](f.read())
         else:
             return f"Unsupported document type: {doc_type}"
         
@@ -343,9 +402,7 @@ class MedicalKnowledgeAgent:
         # Return processing summary
         return self._format_result(result['data'], validation['data'])
     
-    def _format_result(self, 
-                      extracted: Dict[str, Any],
-                      validation: Dict[str, Any]) -> str:
+    def _format_result(self, extracted: Dict[str, Any], validation: Dict[str, Any]) -> str:
         """Format processing results with clinical styling"""
         header = f"""
 {Colors.HEADER}{Colors.BOLD}╔══════════════════════════════════════════════════════════════════╗
@@ -354,20 +411,37 @@ class MedicalKnowledgeAgent:
 """
         sections = []
         
-        # Document Information
-        if 'name' in extracted:
-            sections.append(f"""
-{Colors.INFO}{Emojis.DOCUMENT} Document Type: Drug Label
-{Emojis.DRUG} Drug Name: {Colors.EMPHASIS}{extracted['name']}{Colors.ENDC}
+        # Document Type and Timestamp
+        sections.append(f"""
+{Colors.INFO}{Emojis.DOCUMENT} Document Type: {Colors.EMPHASIS}{extracted.get('type', 'Unknown')}{Colors.ENDC}
 {Emojis.CLOCK} Processed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}{Colors.ENDC}
 """)
         
-        # Clinical Indications
-        if 'indications' in extracted:
+        # Document Sections
+        if extracted.get('sections'):
             sections.append(f"""
-{Colors.INFO}{Colors.BOLD}THERAPEUTIC INDICATIONS:{Colors.ENDC}
-""" + "\n".join(f"{Colors.SUCCESS}• {ind}{Colors.ENDC}" 
-                for ind in extracted['indications']))
+{Colors.INFO}{Colors.BOLD}DOCUMENT SECTIONS:{Colors.ENDC}""")
+            for section_name, content in extracted['sections'].items():
+                sections.append(f"""
+{Colors.SUCCESS}• {section_name}:{Colors.ENDC}
+{Colors.EMPHASIS}{content}{Colors.ENDC}""")
+        
+        # Findings
+        if extracted.get('findings'):
+            sections.append(f"""
+{Colors.INFO}{Colors.BOLD}KEY FINDINGS:{Colors.ENDC}""")
+            for finding in extracted['findings']:
+                sections.append(f"{Colors.SUCCESS}• {finding}{Colors.ENDC}")
+        
+        # Measurements
+        if extracted.get('measurements'):
+            sections.append(f"""
+{Colors.INFO}{Colors.BOLD}MEASUREMENTS:{Colors.ENDC}""")
+            for measurement in extracted['measurements']:
+                sections.append(
+                    f"{Colors.SUCCESS}• {measurement['value']}{measurement['unit']} "
+                    f"({measurement['context']}){Colors.ENDC}"
+                )
         
         # Validation Status
         if validation['is_valid']:
@@ -376,7 +450,7 @@ class MedicalKnowledgeAgent:
 {Emojis.SUCCESS} Document successfully processed and validated
 {Emojis.LINK} Knowledge base updated
 {Emojis.CHART} Ready for clinical reference""")
-            if validation['supporting_evidence']:
+            if validation.get('supporting_evidence'):
                 sections.append(f"{Colors.INFO}Supporting Evidence:{Colors.ENDC}")
                 for evidence in validation['supporting_evidence']:
                     sections.append(f"{Colors.INFO}• {evidence['support_type']}{Colors.ENDC}")
@@ -392,7 +466,6 @@ class MedicalKnowledgeAgent:
 """
         
         return header + "\n".join(sections) + footer
-
     
     def export_knowledge_base(self) -> None:
         """Export processed knowledge to files"""
