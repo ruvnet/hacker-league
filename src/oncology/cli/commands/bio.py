@@ -135,9 +135,14 @@ class BioCommands:
             module = load_script(str(self.scripts_dir / 'bio_analyzer.py'))
             if module:
                 analyzer = module.BioAnalyzer(self.bio_dir)
-                result = analyzer.analyze_expression(data_file, groups_file)
+                result = analyzer.analyze_differential_expression(data_file, groups_file)
                 print(format_success("Analysis complete:"))
-                print(json.dumps(result, indent=2))
+                if result['success']:
+                    print(f"\nAnalyzed {result['n_genes']} genes")
+                    print(f"Found {result['significant']} differentially expressed genes (q<0.05)")
+                    print(f"\nResults saved to: {result['results_file']}")
+                else:
+                    print(format_error(f"Analysis failed: {result['error']}"))
         except Exception as e:
             print(format_error(str(e)))
     
@@ -149,7 +154,13 @@ class BioCommands:
                 analyzer = module.BioAnalyzer(self.bio_dir)
                 result = analyzer.analyze_correlations(data_file, gene_pairs)
                 print(format_success("Analysis complete:"))
-                print(json.dumps(result, indent=2))
+                if result['success']:
+                    print(f"\nAnalyzed {result['n_pairs']} gene pairs")
+                    print(f"Found {result['significant']} significant correlations (q<0.05)")
+                    if result['results_file']:
+                        print(f"\nResults saved to: {result['results_file']}")
+                else:
+                    print(format_error(f"Analysis failed: {result['error']}"))
         except Exception as e:
             print(format_error(str(e)))
     

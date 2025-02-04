@@ -59,12 +59,60 @@ class GenomicHarmonizer:
     def load_vcf(self, vcf_path: Path) -> None:
         """Load and parse VCF file"""
         print(f"Loading VCF: {vcf_path}")
-        # In real system: Use PyVCF or similar to parse VCF files
+        variants = []
+        with open(vcf_path) as f:
+            for line in f:
+                if line.startswith('#'):
+                    continue
+                
+                fields = line.strip().split('\t')
+                if len(fields) < 8:
+                    continue
+                
+                # Parse INFO field
+                info_dict = {}
+                for item in fields[7].split(';'):
+                    if '=' in item:
+                        key, value = item.split('=')
+                        info_dict[key] = value
+                
+                variant = GenomicVariant(
+                    chrom=fields[0],
+                    pos=int(fields[1]),
+                    ref=fields[3],
+                    alt=fields[4],
+                    qual=float(fields[5]),
+                    filter_status=fields[6],
+                    annotations={
+                        'gene': info_dict.get('GENE'),
+                        'impact': info_dict.get('IMPACT')
+                    }
+                )
+                
+                variant_id = f"{fields[0]}_{fields[1]}_{fields[3]}_{fields[4]}"
+                self.variants[variant_id] = variant
         
     def load_expression_data(self, expression_path: Path) -> None:
         """Load RNA-seq expression data"""
         print(f"Loading expression data: {expression_path}")
-        # In real system: Parse RNA-seq count/TPM data
+        df = pd.read_csv(expression_path)
+        
+        # Assuming first column is gene_id and rest are samples
+        gene_ids = df.iloc[:, 0]
+        expression_values = df.iloc[:, 1:]
+        
+        for gene_id, row in zip(gene_ids, expression_values.values):
+            expressions = []
+            for sample_id, value in zip(expression_values.columns, row):
+                expr = ExpressionData(
+                    gene_id=gene_id,
+                    gene_name=gene_id,  # Using gene_id as name for now
+                    expression_value=value,
+                    sample_id=sample_id,
+                    metadata={}
+                )
+                expressions.append(expr)
+            self.expression_data[gene_id] = expressions
         
     def load_clinvar(self) -> None:
         """Load ClinVar annotations"""
@@ -94,7 +142,9 @@ class GenomicHarmonizer:
                 'ref': variant.ref,
                 'alt': variant.alt,
                 'qual': variant.qual,
-                'filter': variant.filter_status
+                'filter_status': variant.filter_status,
+                'gene': variant.annotations.get('gene'),
+                'impact': variant.annotations.get('impact')
             }
             
             # Add ClinVar annotations if available
@@ -113,7 +163,16 @@ class GenomicHarmonizer:
             
             harmonized_variants.append(annotations)
         
-        return pd.DataFrame(harmonized_variants)
+        df = pd.DataFrame(harmonized_variants)
+        # Ensure consistent column order
+        columns = [
+            'variant_id', 'chrom', 'pos', 'ref', 'alt', 'qual', 
+            'filter_status', 'gene', 'impact', 'clinvar_significance',
+            'clinvar_phenotypes', 'cosmic_id', 'cosmic_primary_site'
+        ]
+        # Only include columns that exist
+        columns = [c for c in columns if c in df.columns]
+        return df[columns]
     
     def harmonize_expression_data(self) -> pd.DataFrame:
         """Harmonize expression data across samples"""
@@ -130,17 +189,71 @@ class GenomicHarmonizer:
                 record.update(expr.metadata)
                 expression_records.append(record)
         
-        return pd.DataFrame(expression_records)
+        df = pd.DataFrame(expression_records)
+        # Ensure consistent column order
+        columns = ['gene_id', 'gene_name', 'sample_id', 'expression_value']
+        # Only include columns that exist
+        columns = [c for c in columns if c in df.columns]
+        return df[columns]
+
+    def create_variant_gene_links(self) -> pd.DataFrame:
+        """Create links between variants and gene expression"""
+        links = []
+        
+        # Get variants with gene annotations
+        variants_df = self.harmonize_variant_annotations()
+        variants_with_genes = variants_df[variants_df['gene'].notna()]
+        
+        # Get expression data
+        expression_df = self.harmonize_expression_data()
+        
+        # Create links where genes match
+        for _, variant in variants_with_genes.iterrows():
+            gene = variant['gene']
+            if gene in self.expression_data:
+                # Get mean expression for this gene
+                gene_expr = expression_df[expression_df['gene_id'] == gene]
+                mean_expr = gene_expr['expression_value'].mean()
+                
+                links.append({
+                    'variant_id': variant['variant_id'],
+                    'gene': gene,
+                    'impact': variant['impact'],
+                    'mean_expression': mean_expr,
+                    'chrom': variant['chrom'],
+                    'pos': variant['pos']
+                })
+        
+        df = pd.DataFrame(links)
+        if len(df) > 0:
+            # Ensure consistent column order
+            columns = ['variant_id', 'gene', 'impact', 'mean_expression', 'chrom', 'pos']
+            df = df[columns]
+        return df
     
     def export_harmonized_data(self) -> None:
         """Export harmonized genomic data"""
         # Export harmonized variants
         variants_df = self.harmonize_variant_annotations()
-        variants_df.to_csv(self.output_dir / 'harmonized_variants.csv', index=False)
+        variants_df.to_csv(self.output_dir / 'harmonized_variants.csv', index=False, sep='\t')
         
         # Export harmonized expression data
         expression_df = self.harmonize_expression_data()
-        expression_df.to_csv(self.output_dir / 'harmonized_expression.csv', index=False)
+        expression_df.to_csv(self.output_dir / 'harmonized_expression.csv', index=False, sep='\t')
+        
+        # Export variant-gene links
+        links_df = self.create_variant_gene_links()
+        if len(links_df) > 0:
+            links_df.to_csv(self.output_dir / 'variant_gene_links.csv', index=False, sep='\t')
+        
+        # Export integration stats
+        stats = {
+            'total_variants': len(self.variants),
+            'total_genes': len(self.expression_data),
+            'linked_variants': len(links_df),
+            'timestamp': pd.Timestamp.now().isoformat()
+        }
+        pd.Series(stats).to_json(self.output_dir / 'integration_stats.json')
         
         print(f"Exported harmonized data to {self.output_dir}")
 

@@ -129,8 +129,20 @@ class KBCommands:
             if module:
                 agent = module.MedicalKnowledgeAgent(self.kb_dir)
                 result = agent.query_knowledge_base(entity, relation)
-                print(format_success("Query results:"))
-                print(json.dumps(result, indent=2))
+                if result['success']:
+                    print(format_success("Query Results:"))
+                    print(f"\nSearching for: {Colors.EMPHASIS}{result['query']['entity']}{Colors.ENDC}")
+                    print(f"Relation type: {Colors.EMPHASIS}{result['query']['relation']}{Colors.ENDC}")
+                    print(f"\nFound {Colors.EMPHASIS}{result['count']}{Colors.ENDC} relationships\n")
+                    
+                    if result['results']:
+                        for item in result['results']:
+                            print(f"{Colors.SUCCESS}• {item['entity']} {item['relation']} {item['target']}")
+                            print(f"  Source: {Colors.INFO}{item['source']}{Colors.ENDC}\n")
+                    else:
+                        print(f"{Colors.INFO}No relationships found.{Colors.ENDC}")
+                else:
+                    print(format_error(f"Query failed: {result['error']}"))
         except Exception as e:
             print(format_error(str(e)))
     

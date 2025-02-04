@@ -103,18 +103,25 @@ class GenomicCommands:
     def process_data(self, vcf_path: str, expression_path: str, output_dir: Optional[str] = None) -> None:
         """Process genomic data"""
         try:
-            module = load_script(str(self.scripts_dir / 'genomic_data_agent.py'))
+            module = load_script(str(self.scripts_dir / 'genomic_harmonizer.py'))
             if module:
-                agent = module.GenomicDataAgent(
+                harmonizer = module.GenomicHarmonizer(
                     Path(output_dir) if output_dir else self.harmonized_dir
                 )
-                result = agent.process_data(
-                    vcf_path=vcf_path,
-                    expression_path=expression_path,
-                    annotation_db=self.annotation_db
-                )
+                # Load and process data
+                harmonizer.load_vcf(Path(vcf_path))
+                harmonizer.load_expression_data(Path(expression_path))
+                harmonizer.export_harmonized_data()
+                
+                # Get stats for output
+                stats = {
+                    'total_variants': len(harmonizer.variants),
+                    'total_genes': len(harmonizer.expression_data),
+                    'linked_variants': len(harmonizer.create_variant_gene_links())
+                }
+                
                 print(format_success("Processing complete:"))
-                print(json.dumps(result, indent=2))
+                print(json.dumps(stats, indent=2))
         except Exception as e:
             print(format_error(str(e)))
     

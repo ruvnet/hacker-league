@@ -207,7 +207,11 @@ python -m src.oncology.cli doc report \
 
 ### Input Files
 
-- **VCF Files**: Standard VCF format (v4.2+)
+- **VCF Files**: Standard VCF format (v4.2+) with gene annotations in INFO field:
+  ```
+  ##INFO=<ID=GENE,Number=1,Type=String,Description="Gene name">
+  ##INFO=<ID=IMPACT,Number=1,Type=String,Description="Impact prediction">
+  ```
 - **Expression Data**: CSV files with genes as rows and samples as columns
 - **Gene Lists**: Text files with one gene per line
 - **Pathway Files**: JSON format with pathway definitions
@@ -216,10 +220,34 @@ python -m src.oncology.cli doc report \
 
 ### Output Files
 
-- **Harmonized Data**: CSV files with standardized formats
+- **Harmonized Data**: Tab-separated files with standardized formats:
+  - harmonized_variants.csv: Annotated variant information
+  - harmonized_expression.csv: Sample-level expression data
+  - variant_gene_links.csv: Integrated variant-expression relationships
+  - integration_stats.json: Summary statistics and metrics
 - **Analysis Results**: JSON files with detailed results
 - **Reports**: PDF or HTML formats with visualizations
 - **Statistics**: JSON files with summary statistics
+
+### Example Output Formats
+
+#### Harmonized Variants (harmonized_variants.csv)
+```
+variant_id  chrom  pos  ref  alt  qual  filter_status  gene  impact
+chr17_41244000_G_A  chr17  41244000  G  A  100.0  PASS  BRCA1  HIGH
+```
+
+#### Expression Data (harmonized_expression.csv)
+```
+gene_id  gene_name  sample_id  expression_value
+BRCA1  BRCA1  SAMPLE1  10.5
+```
+
+#### Variant-Gene Links (variant_gene_links.csv)
+```
+variant_id  gene  impact  mean_expression  chrom  pos
+chr17_41244000_G_A  BRCA1  HIGH  10.26  chr17  41244000
+```
 
 ## Environment Variables
 
@@ -244,19 +272,22 @@ Error messages include:
 ## Best Practices
 
 1. **Data Organization**
-   - Keep input files in appropriate subdirectories
-   - Use consistent file naming conventions
-   - Maintain separate directories for raw and processed data
+   - Organize input files by type (variants/, expression/, etc.)
+   - Use descriptive file names (e.g., patient1_tumor_variants.vcf)
+   - Keep raw data separate from processed outputs
+   - Store harmonized data in a dedicated directory
 
 2. **Command Usage**
    - Use full paths for input/output files
    - Quote file paths containing spaces
    - Use the --help option for command-specific guidance
+   - Process data in logical order (e.g., harmonize before analysis)
 
 3. **Error Recovery**
    - Check input file formats before processing
    - Use the --output option to specify safe locations
    - Keep backups of important data files
+   - Verify output file contents after processing
 
 ## Support
 

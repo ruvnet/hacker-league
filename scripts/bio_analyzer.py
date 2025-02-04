@@ -12,7 +12,7 @@ This script demonstrates analysis workflows for investigating biological relatio
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, Optional
+from typing import Dict, List, Set, Tuple, Optional, Any
 from dataclasses import dataclass
 from scipy import stats
 from statsmodels.stats.multitest import multipletests
@@ -223,6 +223,80 @@ class BioAnalyzer:
             'odds_ratio', 'pvalue', 'qvalue', 'overlap_genes'
         ])
     
+    def analyze_differential_expression(self,
+                                     data_file: str,
+                                     groups_file: str) -> Dict[str, Any]:
+        """
+        Perform differential expression analysis between groups
+        
+        Args:
+            data_file: Path to expression data CSV
+            groups_file: Path to sample groups CSV
+            
+        Returns:
+            Dictionary with analysis results
+        """
+        try:
+            # Load expression data
+            expr_data = pd.read_csv(data_file, index_col=0)
+            
+            # Load group definitions
+            groups_data = pd.read_csv(groups_file)
+            group1_samples = groups_data[groups_data['group'] == 1]['sample'].tolist()
+            group2_samples = groups_data[groups_data['group'] == 2]['sample'].tolist()
+            
+            results = []
+            for gene in expr_data.index:
+                # Get expression values for each group
+                expr1 = expr_data.loc[gene, group1_samples]
+                expr2 = expr_data.loc[gene, group2_samples]
+                
+                # Calculate statistics
+                tstat, pvalue = stats.ttest_ind(expr1, expr2)
+                
+                # Calculate fold change
+                mean1 = np.mean(expr1)
+                mean2 = np.mean(expr2)
+                log2fc = np.log2(mean2 / mean1) if mean1 > 0 else np.nan
+                
+                results.append({
+                    'gene': gene,
+                    'log2fc': log2fc,
+                    'pvalue': pvalue,
+                    'mean_group1': mean1,
+                    'mean_group2': mean2
+                })
+            
+            # Create results DataFrame
+            results_df = pd.DataFrame(results)
+            
+            # Multiple testing correction
+            results_df['qvalue'] = multipletests(
+                results_df['pvalue'].fillna(1),
+                method='fdr_bh'
+            )[1]
+            
+            # Sort by significance
+            results_df = results_df.sort_values('pvalue')
+            
+            # Save results
+            output_file = self.data_dir / 'differential_expression.csv'
+            results_df.to_csv(output_file)
+            
+            return {
+                'success': True,
+                'n_genes': len(results_df),
+                'significant': sum(results_df['qvalue'] < 0.05),
+                'results_file': str(output_file),
+                'data': results_df.to_dict('records')
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
     def find_drug_targets(self, gene_list: List[str]) -> pd.DataFrame:
         """
         Find drugs targeting specified genes
@@ -242,6 +316,87 @@ class BioAnalyzer:
         ]
         
         return target_info.sort_values(['target_gene', 'drug_name'])
+
+    def analyze_correlations(self,
+                           data_file: str,
+                           gene_pairs_file: str) -> Dict[str, Any]:
+        """
+        Analyze correlations for multiple gene pairs
+        
+        Args:
+            data_file: Path to expression data CSV
+            gene_pairs_file: Path to gene pairs CSV (columns: gene1, gene2)
+            
+        Returns:
+            Dictionary with correlation results
+        """
+        try:
+            # Load expression data
+            expr_data = pd.read_csv(data_file, index_col=0)
+            
+            # Load gene pairs
+            pairs_data = pd.read_csv(gene_pairs_file)
+            
+            results = []
+            for _, row in pairs_data.iterrows():
+                gene1, gene2 = row['gene1'], row['gene2']
+                
+                # Get expression values
+                try:
+                    expr1 = expr_data.loc[gene1]
+                    expr2 = expr_data.loc[gene2]
+                    
+                    # Calculate correlation
+                    corr, pvalue = stats.pearsonr(expr1, expr2)
+                    
+                    results.append({
+                        'gene1': gene1,
+                        'gene2': gene2,
+                        'correlation': corr,
+                        'pvalue': pvalue
+                    })
+                except KeyError:
+                    print(f"Warning: Genes not found: {gene1}, {gene2}")
+                    continue
+            
+            # Create results DataFrame
+            results_df = pd.DataFrame(results)
+            
+            if len(results_df) > 0:
+                # Multiple testing correction
+                results_df['qvalue'] = multipletests(
+                    results_df['pvalue'].fillna(1),
+                    method='fdr_bh'
+                )[1]
+                
+                # Sort by significance
+                results_df = results_df.sort_values('pvalue')
+                
+                # Save results
+                output_file = self.data_dir / 'gene_correlations.csv'
+                results_df.to_csv(output_file)
+                
+                return {
+                    'success': True,
+                    'n_pairs': len(results_df),
+                    'significant': sum(results_df['qvalue'] < 0.05),
+                    'results_file': str(output_file),
+                    'data': results_df.to_dict('records')
+                }
+            
+            return {
+                'success': True,
+                'n_pairs': 0,
+                'significant': 0,
+                'results_file': None,
+                'data': []
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
 
 def main():
     # Initialize analyzer

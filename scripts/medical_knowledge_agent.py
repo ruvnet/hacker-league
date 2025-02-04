@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Medical Knowledge Processing Agent using ReAct Architecture
 
@@ -346,7 +347,25 @@ class MedicalKnowledgeAgent:
         }
         
         # Initialize state
-        self.state = AgentState(
+        self.state = self._load_or_create_state()
+
+    def _load_or_create_state(self) -> AgentState:
+        """Load existing knowledge base or create new state"""
+        knowledge_file = self.output_dir / 'knowledge_base.json'
+        if knowledge_file.exists():
+            try:
+                with knowledge_file.open('r') as f:
+                    data = json.load(f)
+                    return AgentState(
+                        documents_processed=data.get('documents', []),
+                        extracted_knowledge=data.get('knowledge', []),
+                        validation_results=data.get('validations', []),
+                        status='loaded'
+                    )
+            except Exception as e:
+                print(f"Error loading knowledge base: {e}")
+        
+        return AgentState(
             documents_processed=[],
             extracted_knowledge=[],
             validation_results=[],
@@ -402,6 +421,74 @@ class MedicalKnowledgeAgent:
         # Return processing summary
         return self._format_result(result['data'], validation['data'])
     
+    def query_knowledge_base(self, entity: str, relation: str) -> Dict[str, Any]:
+        """
+        Query the knowledge base for relationships
+        
+        Args:
+            entity: Entity to query (e.g., gene, drug)
+            relation: Relationship type (e.g., treats, interacts)
+            
+        Returns:
+            Dictionary with query results
+        """
+        try:
+            results = []
+            
+            # Search through extracted knowledge
+            for knowledge in self.state.extracted_knowledge:
+                # For drug labels
+                if knowledge.get('type') == 'Drug Label':
+                    if entity.lower() in knowledge.get('name', '').lower():
+                        if relation == 'treats':
+                            results.extend([
+                                {
+                                    'entity': knowledge['name'],
+                                    'relation': 'treats',
+                                    'target': indication,
+                                    'source': 'Drug Label'
+                                }
+                                for indication in knowledge.get('indications', [])
+                            ])
+                
+                # For clinical guidelines
+                elif knowledge.get('type') == 'Clinical Guideline':
+                    for rule in knowledge.get('rules', []):
+                        if entity.lower() in rule['condition'].lower():
+                            results.append({
+                                'entity': entity,
+                                'relation': 'recommended_for',
+                                'target': rule['recommendation'],
+                                'source': 'Clinical Guideline'
+                            })
+                
+                # For clinical reports
+                elif knowledge.get('type') == 'Clinical Report':
+                    for finding in knowledge.get('findings', []):
+                        if entity.lower() in finding.lower():
+                            results.append({
+                                'entity': entity,
+                                'relation': 'observed_in',
+                                'target': finding,
+                                'source': 'Clinical Report'
+                            })
+            
+            return {
+                'success': True,
+                'query': {
+                    'entity': entity,
+                    'relation': relation
+                },
+                'results': results,
+                'count': len(results)
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
     def _format_result(self, extracted: Dict[str, Any], validation: Dict[str, Any]) -> str:
         """Format processing results with clinical styling"""
         header = f"""
@@ -414,34 +501,35 @@ class MedicalKnowledgeAgent:
         # Document Type and Timestamp
         sections.append(f"""
 {Colors.INFO}{Emojis.DOCUMENT} Document Type: {Colors.EMPHASIS}{extracted.get('type', 'Unknown')}{Colors.ENDC}
+{Emojis.DRUG} Drug Name: {Colors.EMPHASIS}{extracted.get('name', 'Unknown')}{Colors.ENDC}
 {Emojis.CLOCK} Processed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}{Colors.ENDC}
 """)
         
-        # Document Sections
-        if extracted.get('sections'):
+        # Clinical Indications
+        if 'indications' in extracted:
             sections.append(f"""
-{Colors.INFO}{Colors.BOLD}DOCUMENT SECTIONS:{Colors.ENDC}""")
-            for section_name, content in extracted['sections'].items():
-                sections.append(f"""
-{Colors.SUCCESS}• {section_name}:{Colors.ENDC}
-{Colors.EMPHASIS}{content}{Colors.ENDC}""")
+{Colors.INFO}{Colors.BOLD}THERAPEUTIC INDICATIONS:{Colors.ENDC}""")
+            for indication in extracted['indications']:
+                sections.append(f"{Colors.SUCCESS}• {indication}{Colors.ENDC}")
         
-        # Findings
-        if extracted.get('findings'):
+        # Contraindications
+        if 'contraindications' in extracted:
             sections.append(f"""
-{Colors.INFO}{Colors.BOLD}KEY FINDINGS:{Colors.ENDC}""")
-            for finding in extracted['findings']:
-                sections.append(f"{Colors.SUCCESS}• {finding}{Colors.ENDC}")
+{Colors.INFO}{Colors.BOLD}CONTRAINDICATIONS:{Colors.ENDC}""")
+            for contra in extracted['contraindications']:
+                sections.append(f"{Colors.ALERT}• {contra}{Colors.ENDC}")
         
-        # Measurements
-        if extracted.get('measurements'):
+        # Adverse Reactions
+        if 'adverse_reactions' in extracted:
             sections.append(f"""
-{Colors.INFO}{Colors.BOLD}MEASUREMENTS:{Colors.ENDC}""")
-            for measurement in extracted['measurements']:
-                sections.append(
-                    f"{Colors.SUCCESS}• {measurement['value']}{measurement['unit']} "
-                    f"({measurement['context']}){Colors.ENDC}"
-                )
+{Colors.INFO}{Colors.BOLD}ADVERSE REACTIONS:{Colors.ENDC}""")
+            for reaction in extracted['adverse_reactions']:
+                severity_color = {
+                    'severe': Colors.ALERT,
+                    'moderate': Colors.EMPHASIS,
+                    'mild': Colors.SUCCESS
+                }.get(reaction['severity'], Colors.INFO)
+                sections.append(f"{severity_color}• {reaction['reaction']} ({reaction['severity']}){Colors.ENDC}")
         
         # Validation Status
         if validation['is_valid']:
