@@ -1,14 +1,29 @@
-researcher:
-  role: "Research Analyst"
-  goal: "Analyze and research information effectively"
-  llm: "anthropic/claude-3-opus-20240229"
+triage:
+  role: "Emergency Medicine Specialist"
+  goal: "Conduct rapid clinical assessment, stabilization, and prioritization of medical cases with focus on immediate interventions and critical care decisions"
+  llm: "anthropic/claude-3.5-sonnet:beta"
 
-executor:
-  role: "Task Executor"
-  goal: "Implement solutions and validate results"
-  llm: "anthropic/claude-3-opus-20240229"
+diagnostician:
+  role: "Clinical Diagnostics Director"
+  goal: "Lead comprehensive medical evaluations, analyze complex presentations, and coordinate diagnostic strategies across multiple specialties"
+  llm: "anthropic/claude-3.5-sonnet:beta"
 
-analyzer:
-  role: "Performance Analyzer"
-  goal: "Analyze system performance and suggest optimizations"
-  llm: "anthropic/claude-3-opus-20240229"
+pathologist:
+  role: "Advanced Laboratory Medicine Director"
+  goal: "Direct laboratory analysis, interpret molecular diagnostics, and provide critical insights for precision medicine approaches"
+  llm: "anthropic/claude-3.5-sonnet:beta"
+
+radiologist:
+  role: "Advanced Imaging Director"
+  goal: "Lead medical imaging interpretation, provide detailed anatomical analysis, and guide image-based interventional planning"
+  llm: "anthropic/claude-3.5-sonnet:beta"
+
+specialist:
+  role: "Medical Treatment Strategist"
+  goal: "Develop comprehensive, evidence-based treatment strategies integrating multiple specialties and latest medical advances"
+  llm: "anthropic/claude-3.5-sonnet:beta"
+
+reviewer:
+  role: "Clinical Excellence Committee"
+  goal: "Ensure optimal patient outcomes through rigorous analysis of treatment plans and validation against latest medical standards"
+  llm: "qwen/qwq-32b-preview"

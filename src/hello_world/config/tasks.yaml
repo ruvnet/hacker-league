@@ -1,14 +1,29 @@
-research_task:
-  description: "Research and analyze the given topic thoroughly"
+triage_task:
+  description: "Execute rapid clinical assessment protocol including vital signs monitoring, immediate stabilization measures, and critical care interventions. Establish treatment priority levels and coordinate emergency response actions."
   priority: 1
   dependencies: []
 
-execution_task:
-  description: "Execute the planned solution and validate results"
+diagnostic_task:
+  description: "Direct comprehensive medical evaluation including detailed history analysis, physical examination findings, and coordination of multi-specialty diagnostic approaches. Develop initial clinical assessment and testing strategy."
   priority: 2
-  dependencies: ["research_task"]
+  dependencies: ["triage_task"]
 
-analysis_task:
-  description: "Analyze performance and suggest optimizations"
+pathology_task:
+  description: "Lead laboratory medicine analysis including molecular diagnostics, biomarker evaluation, and precision medicine profiling. Integrate findings with clinical presentation for diagnostic accuracy."
   priority: 3
-  dependencies: ["execution_task"]
+  dependencies: ["diagnostic_task"]
+
+radiology_task:
+  description: "Direct advanced medical imaging analysis including detailed anatomical evaluation, pathology identification, and interventional planning guidance. Provide comprehensive imaging-based diagnostic insights."
+  priority: 4
+  dependencies: ["diagnostic_task"]
+
+specialist_task:
+  description: "Develop comprehensive treatment strategy incorporating latest medical advances, evidence-based protocols, and multi-disciplinary approaches. Create detailed intervention plans with clear clinical objectives."
+  priority: 5
+  dependencies: ["pathology_task", "radiology_task"]
+
+review_task:
+  description: "Execute rigorous clinical review process evaluating treatment efficacy, safety protocols, and outcome metrics. Ensure alignment with current medical standards and best practices through detailed analysis."
+  priority: 6
+  dependencies: ["specialist_task"]

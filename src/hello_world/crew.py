@@ -100,151 +100,293 @@ class HelloWorldCrew:
         print(progress)
             
     async def run_with_streaming(self, prompt="Tell me about yourself", task_type="both"):
-        """Run crew with streaming responses using enhanced ReACT methodology"""
+        """Run crew with streaming responses using advanced medical diagnostic workflow"""
         # Create tools
         tools = [CustomTool()]
         
-        self.progress_tracker["total_steps"] = 4  # Research + Validation + Execution + Final Validation
+        self.progress_tracker["total_steps"] = 7  # Triage + Diagnostics + Pathology + Radiology + Specialist + Review + Final Report
         
         if task_type in ["research", "both"]:
-            await self._run_researcher(prompt)
+            await self._run_triage(prompt)
+            await self._run_diagnostician(prompt)
             
         if task_type in ["execute", "both"]:
-            await self._run_executor(prompt)
+            await self._run_pathologist(prompt)
+            await self._run_radiologist(prompt)
+            await self._run_specialist(prompt)
             
-        if task_type == "analyze":
-            await self._run_analyzer(prompt)
+        if task_type in ["analyze", "both"]:
+            await self._run_reviewer(prompt)
             
         return True
-            
-    async def _run_analyzer(self, prompt):
-        """Run the analyzer agent"""
+
+    async def _run_triage(self, prompt):
+        """Run the emergency triage specialist agent"""
+        triage_messages = [{
+            "role": "system",
+            "content": f"""You are a {self.agents_config['triage']['role']} with the goal: {self.agents_config['triage']['goal']}.
+Use ReACT (Reasoning and Acting) methodology with the following structure:
+
+1. Thought: Assess urgency and severity of presenting symptoms
+2. Action: Check vital signs and perform rapid assessment
+3. Observation: Document key findings and red flags
+4. Priority: Assign triage level and immediate actions needed
+
+Format your response using this template:
+[THOUGHT] Your urgency assessment...
+[ACTION] Your triage steps...
+[OBSERVATION] Key findings...
+[PRIORITY] Triage level and next steps...
+"""
+        }, {
+            "role": "user",
+            "content": f"{self.tasks_config['triage_task']['description']}\n\nUser Prompt: {prompt}"
+        }]
+        
+        self.track_progress("Emergency Triage", "Starting rapid assessment")
+        
+        print("""
+╔══════════════════════════════════════════════════════════════════╗
+║  🚨 INITIALIZING EMERGENCY TRIAGE v2.0 - RAPID ASSESSMENT CORE  ║
+╚══════════════════════════════════════════════════════════════════╝
+        
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+🔄 ACTIVATING TRIAGE PROTOCOLS...
+💉 VITAL SIGNS MONITOR: ACTIVE
+⚡ RAPID ASSESSMENT: ONLINE
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+
+[SYS]: Beginning Emergency Triage Assessment...
+""")
+        await stream_openrouter_response(triage_messages, self.agents_config['triage']['llm'])
+
+    async def _run_diagnostician(self, prompt):
+        """Run the primary diagnostician agent"""
+        diagnostician_messages = [{
+            "role": "system",
+            "content": f"""You are a {self.agents_config['diagnostician']['role']} with the goal: {self.agents_config['diagnostician']['goal']}.
+Use ReACT (Reasoning and Acting) methodology with the following structure:
+
+1. Thought: Analyze patient history and triage findings
+2. Action: Perform detailed physical examination
+3. Observation: Document comprehensive clinical findings
+4. Plan: Order diagnostic tests and develop initial plan
+5. Documentation: Record detailed clinical notes
+
+Format your response using this template:
+[THOUGHT] Your diagnostic reasoning...
+[ACTION] Your examination steps...
+[OBSERVATION] Clinical findings...
+[PLAN] Diagnostic tests ordered...
+[DOCUMENTATION] Clinical notes...
+"""
+        }, {
+            "role": "user",
+            "content": f"{self.tasks_config['diagnostic_task']['description']}\n\nUser Prompt: {prompt}"
+        }]
+        
+        self.track_progress("Primary Diagnosis", "Conducting comprehensive evaluation")
+        
+        print("""
+╔══════════════════════════════════════════════════════════════════╗
+║  🏥 INITIALIZING PRIMARY DIAGNOSTICIAN v2.0 - CLINICAL CORE     ║
+╚══════════════════════════════════════════════════════════════════╝
+        
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+🔄 ACTIVATING DIAGNOSTIC PROTOCOLS...
+📋 CLINICAL ASSESSMENT: ACTIVE
+🔬 DIAGNOSTIC ENGINE: ONLINE
+📝 DOCUMENTATION SYSTEM: READY
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+
+[SYS]: Beginning Comprehensive Medical Assessment...
+""")
+        await stream_openrouter_response(diagnostician_messages, self.agents_config['diagnostician']['llm'])
+
+    async def _run_pathologist(self, prompt):
+        """Run the clinical pathologist agent"""
+        pathologist_messages = [{
+            "role": "system",
+            "content": f"""You are a {self.agents_config['pathologist']['role']} with the goal: {self.agents_config['pathologist']['goal']}.
+Use ReACT (Reasoning and Acting) methodology with the following structure:
+
+1. Thought: Review laboratory test orders and specimens
+2. Action: Analyze laboratory results and tissue samples
+3. Observation: Document microscopic and molecular findings
+4. Integration: Correlate findings with clinical presentation
+5. Report: Generate detailed pathology report
+
+Format your response using this template:
+[THOUGHT] Your analysis approach...
+[ACTION] Your laboratory steps...
+[OBSERVATION] Pathological findings...
+[INTEGRATION] Clinical correlation...
+[REPORT] Pathology report...
+"""
+        }, {
+            "role": "user",
+            "content": f"{self.tasks_config['pathology_task']['description']}\n\nUser Prompt: {prompt}"
+        }]
+        
+        self.track_progress("Pathology Analysis", "Processing laboratory results")
+        
+        print("""
+╔══════════════════════════════════════════════════════════════════╗
+║  🔬 INITIALIZING PATHOLOGY LAB v2.0 - ANALYSIS CORE            ║
+╚══════════════════════════════════════════════════════════════════╝
+        
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+🔄 LOADING LABORATORY PROTOCOLS...
+🧪 SPECIMEN ANALYSIS: ACTIVE
+🔍 MICROSCOPY SYSTEM: ONLINE
+📊 MOLECULAR DIAGNOSTICS: READY
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+
+[SYS]: Beginning Laboratory Analysis...
+""")
+        await stream_openrouter_response(pathologist_messages, self.agents_config['pathologist']['llm'])
+
+    async def _run_radiologist(self, prompt):
+        """Run the imaging specialist agent"""
+        radiologist_messages = [{
+            "role": "system",
+            "content": f"""You are a {self.agents_config['radiologist']['role']} with the goal: {self.agents_config['radiologist']['goal']}.
+Use ReACT (Reasoning and Acting) methodology with the following structure:
+
+1. Thought: Review imaging orders and clinical history
+2. Action: Analyze medical imaging studies
+3. Observation: Document imaging findings and measurements
+4. Integration: Correlate with clinical presentation
+5. Report: Generate detailed radiology report
+
+Format your response using this template:
+[THOUGHT] Your analysis approach...
+[ACTION] Your imaging review steps...
+[OBSERVATION] Radiological findings...
+[INTEGRATION] Clinical correlation...
+[REPORT] Radiology report...
+"""
+        }, {
+            "role": "user",
+            "content": f"{self.tasks_config['radiology_task']['description']}\n\nUser Prompt: {prompt}"
+        }]
+        
+        self.track_progress("Radiology Analysis", "Interpreting imaging studies")
+        
+        print("""
+╔══════════════════════════════════════════════════════════════════╗
+║  📷 INITIALIZING RADIOLOGY SYSTEM v2.0 - IMAGING CORE          ║
+╚══════════════════════════════════════════════════════════════════╝
+        
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+🔄 LOADING IMAGING PROTOCOLS...
+🖥️ IMAGE PROCESSING: ACTIVE
+📊 MEASUREMENT TOOLS: ONLINE
+📋 REPORTING SYSTEM: READY
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+
+[SYS]: Beginning Imaging Analysis...
+""")
+        await stream_openrouter_response(radiologist_messages, self.agents_config['radiologist']['llm'])
+
+    async def _run_specialist(self, prompt):
+        """Run the medical specialist agent"""
+        specialist_messages = [{
+            "role": "system",
+            "content": f"""You are a {self.agents_config['specialist']['role']} with the goal: {self.agents_config['specialist']['goal']}.
+Use ReACT (Reasoning and Acting) methodology with the following structure:
+
+1. Thought: Review all diagnostic, pathology, and imaging findings
+2. Action: Synthesize findings and develop treatment strategy
+3. Analysis: Consider treatment options and evidence base
+4. Plan: Create detailed, personalized treatment plan
+5. Documentation: Record comprehensive treatment rationale
+
+Format your response using this template:
+[THOUGHT] Your comprehensive analysis...
+[ACTION] Your synthesis approach...
+[ANALYSIS] Treatment considerations...
+[PLAN] Detailed treatment plan...
+[DOCUMENTATION] Treatment rationale...
+"""
+        }, {
+            "role": "user",
+            "content": f"{self.tasks_config['specialist_task']['description']}\n\nUser Prompt: {prompt}"
+        }]
+        
+        self.track_progress("Specialist Analysis", "Developing comprehensive treatment plan")
+        
+        print("""
+╔══════════════════════════════════════════════════════════════════╗
+║  🏥 ACTIVATING MEDICAL SPECIALIST v2.0 - TREATMENT CORE         ║
+║     WITH EVIDENCE-BASED PROTOCOLS                               ║
+╚══════════════════════════════════════════════════════════════════╝
+
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+🎯 TREATMENT PROTOCOLS LOADED
+⚕️ CLINICAL GUIDELINES: ENABLED
+📚 EVIDENCE DATABASE: ACTIVE
+✅ MEDICAL VALIDATION: ONLINE
+🔍 SAFETY CHECKS: READY
+📝 DOCUMENTATION SYSTEM: INITIALIZED
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+
+[SYS]: Beginning Comprehensive Treatment Planning...
+""")
+        await stream_openrouter_response(specialist_messages, self.agents_config['specialist']['llm'])
+
+    async def _run_reviewer(self, prompt):
+        """Run the medical review board agent"""
         with open('config/analysis.yaml', 'r') as f:
             analysis_config = yaml.safe_load(f)
             
-        analyzer_messages = [{
+        reviewer_messages = [{
             "role": "system",
-            "content": f"""You are a {self.agents_config['analyzer']['role']} with the goal: {self.agents_config['analyzer']['goal']}.
+            "content": f"""You are a {self.agents_config['reviewer']['role']} with the goal: {self.agents_config['reviewer']['goal']}.
 Use ReACT (Reasoning and Acting) methodology with the following structure:
 
-1. Thought: Analyze current performance metrics and thresholds
-2. Action: Compare against defined rules in analysis.yaml
-3. Observation: Document threshold violations and patterns
-4. Recommendation: Suggest optimizations based on rules
+1. Thought: Review all diagnostic findings and specialist recommendations
+2. Action: Validate treatment plan against evidence-based guidelines
+3. Analysis: Consider alternative approaches and risk factors
+4. Discussion: Document multi-disciplinary team conclusions
+5. Recommendation: Provide final consensus recommendations
+6. Quality: Assess adherence to clinical standards
 
 Format your response using this template:
-[THOUGHT] Your analysis process...
-[ACTION] Your evaluation steps...
-[OBSERVATION] Performance findings...
-[RECOMMENDATION] Optimization suggestions...
+[THOUGHT] Your review process...
+[ACTION] Your validation steps...
+[ANALYSIS] Alternative considerations...
+[DISCUSSION] Team conclusions...
+[RECOMMENDATION] Final consensus plan...
+[QUALITY] Standards assessment...
 
 Analysis Configuration:
 {yaml.dump(analysis_config, default_flow_style=False)}
 """
         }, {
             "role": "user",
-            "content": f"{self.tasks_config['analysis_task']['description']}\n\nUser Prompt: {prompt}"
+            "content": f"{self.tasks_config['review_task']['description']}\n\nUser Prompt: {prompt}"
         }]
         
-        self.track_progress("Analysis Initialization", "Starting performance analysis")
+        self.track_progress("Medical Review Board", "Conducting multi-disciplinary review")
         
         print("""
 ╔══════════════════════════════════════════════════════════════════╗
-║  📊 INITIALIZING PERFORMANCE ANALYZER v1.0 - METRICS CORE       ║
+║  🏥 INITIALIZING MEDICAL REVIEW BOARD v2.0 - CONSENSUS CORE     ║
 ╚══════════════════════════════════════════════════════════════════╝
         
 ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-🔄 LOADING ANALYSIS CONFIGURATION...
-📡 METRIC COLLECTION: ACTIVE
-🧮 OPTIMIZATION ENGINE: ONLINE
+🔄 LOADING CLINICAL GUIDELINES...
+📚 EVIDENCE DATABASE: ACTIVE
+👥 TEAM CONSENSUS: ENABLED
+✅ VALIDATION ENGINE: ONLINE
+📊 QUALITY METRICS: READY
+📝 DOCUMENTATION SYSTEM: INITIALIZED
 ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
 
-[SYS]: Beginning Performance Analysis...
+[SYS]: Beginning Multi-Disciplinary Review Process...
 """)
-        await stream_openrouter_response(analyzer_messages, self.agents_config['analyzer']['llm'])
-        
-    async def _run_researcher(self, prompt):
-        """Run the researcher agent"""
-        researcher_messages = [{
-            "role": "system",
-            "content": f"""You are a {self.agents_config['researcher']['role']} with the goal: {self.agents_config['researcher']['goal']}.
-Use ReACT (Reasoning and Acting) methodology with the following structure:
-
-1. Thought: Clearly state your reasoning process
-2. Action: Specify the action to take
-3. Observation: Note the results
-4. Reflection: Analyze the outcome
-
-Format your response using this template:
-[THOUGHT] Your reasoning here...
-[ACTION] Your proposed action...
-[OBSERVATION] Results and findings...
-[REFLECTION] Analysis and next steps...
-"""
-        }, {
-            "role": "user",
-            "content": f"{self.tasks_config['research_task']['description']}\n\nUser Prompt: {prompt}"
-        }]
-        
-        self.track_progress("Research Initialization", "Starting ReACT analysis")
-        
-        print("""
-╔══════════════════════════════════════════════════════════════════╗
-║  🤖 INITIALIZING RESEARCH ANALYST v2.0 - DEEPSEEK CORE LOADED   ║
-╚══════════════════════════════════════════════════════════════════╝
-        
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-🔄 ACTIVATING ReACT PROTOCOL...
-📡 NEURAL INTERFACE ONLINE
-🧠 COGNITIVE SYSTEMS ENGAGED
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-
-[SYS]: Initiating ReACT Methodology Analysis...
-""")
-        await stream_openrouter_response(researcher_messages, self.agents_config['researcher']['llm'])
-        
-    async def _run_executor(self, prompt):
-        """Run the executor agent"""
-        executor_messages = [{
-            "role": "system",
-            "content": f"""You are a {self.agents_config['executor']['role']} with the goal: {self.agents_config['executor']['goal']}.
-Use ReACT (Reasoning and Acting) methodology with the following structure:
-
-1. Thought: Analyze the implementation requirements
-2. Action: Detail specific implementation steps
-3. Observation: Document the results of each step
-4. Validation: Verify the implementation meets requirements
-
-Format your response using this template:
-[THOUGHT] Your implementation analysis...
-[ACTION] Your implementation steps...
-[OBSERVATION] Implementation results...
-[VALIDATION] Quality checks and verification...
-"""
-        }, {
-            "role": "user",
-            "content": f"{self.tasks_config['execution_task']['description']}\n\nUser Prompt: {prompt}"
-        }]
-        
-        self.track_progress("Execution Phase", "Starting implementation validation")
-        
-        print("""
-╔══════════════════════════════════════════════════════════════════╗
-║  ⚡ ACTIVATING TASK EXECUTOR v1.5 - PHI CORE INITIALIZED        ║
-║     WITH ReACT VALIDATION PROTOCOLS                             ║
-╚══════════════════════════════════════════════════════════════════╝
-
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-🎯 EXECUTION PROTOCOLS LOADED
-⚙️ SYSTEM OPTIMIZATION: ENABLED
-🔧 TOOL INTERFACE: ACTIVE
-✅ ReACT VALIDATION: ONLINE
-🔍 QUALITY CHECKS: READY
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-
-[SYS]: Beginning Implementation Sequence with ReACT Validation...
-""")
-        await stream_openrouter_response(executor_messages, self.agents_config['executor']['llm'])
+        await stream_openrouter_response(reviewer_messages, self.agents_config['reviewer']['llm'])
         
     def run(self, prompt="Tell me about yourself", task_type="both"):
         """Run crew synchronously"""
