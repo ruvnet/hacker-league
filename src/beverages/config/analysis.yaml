@@ -1,0 +1,28 @@
+performance_metrics:
+  market_coverage:
+    threshold: 90  # percentage
+    warning_level: 80
+    critical_level: 70
+    
+  consumer_satisfaction:
+    threshold: 85  # percentage
+    warning_level: 75
+    critical_level: 65
+    
+  product_innovation:
+    threshold: 80  # percentage
+    warning_level: 70
+    critical_level: 60
+
+optimization_rules:
+  - name: "Market Coverage Enhancement"
+    condition: "market_coverage < warning_level"
+    action: "Expand market research scope and identify gaps in analysis"
+    
+  - name: "Consumer Satisfaction Improvement"
+    condition: "consumer_satisfaction < warning_level"
+    action: "Review product formulation and gather additional consumer feedback"
+    
+  - name: "Innovation Score Optimization"
+    condition: "product_innovation < warning_level"
+    action: "Explore emerging trends and unique ingredient combinations"

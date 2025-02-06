@@ -1,0 +1,29 @@
+market_researcher:
+  role: "Market Research Specialist"
+  goal: "Conduct comprehensive market analysis, identify trends, and gather consumer insights for non-alcoholic beverage products"
+  llm: "anthropic/claude-3.5-sonnet:beta"
+
+consumer_analyst:
+  role: "Consumer Behavior Analyst"
+  goal: "Analyze consumer preferences, demographics, and purchasing patterns to inform product development strategies"
+  llm: "anthropic/claude-3.5-sonnet:beta"
+
+product_developer:
+  role: "Beverage Product Developer"
+  goal: "Design innovative non-alcoholic beverage formulations based on market research and consumer preferences"
+  llm: "anthropic/claude-3.5-sonnet:beta"
+
+quality_analyst:
+  role: "Quality Assurance Specialist"
+  goal: "Evaluate product quality, taste profiles, and ensure compliance with industry standards and regulations"
+  llm: "anthropic/claude-3.5-sonnet:beta"
+
+marketing_strategist:
+  role: "Marketing Strategy Director"
+  goal: "Develop comprehensive marketing strategies and positioning for new beverage products"
+  llm: "anthropic/claude-3.5-sonnet:beta"
+
+review_board:
+  role: "Product Review Committee"
+  goal: "Evaluate product concepts, validate market potential, and ensure alignment with business objectives"
+  llm: "qwen/qwq-32b-preview"
