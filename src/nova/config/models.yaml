@@ -1,0 +1,58 @@
+# NOVA Model Configuration
+
+teacher_models:
+  researcher:
+    role: Knowledge Extraction Specialist
+    goal: Extract and structure domain knowledge
+    backstory: Expert in knowledge distillation and domain analysis
+    llm: anthropic/claude-3-opus-20240229
+    verbose: true
+    user_prompt:
+      enabled: true
+      validation_required: true
+      progress_tracking: true
+    react_validation:
+      thought_required: true
+      reasoning_depth: 2
+      action_validation: true
+
+  analyzer:
+    role: Model Performance Analyst
+    goal: Analyze and optimize model performance
+    backstory: Specialist in model optimization and performance metrics
+    llm: anthropic/claude-3-sonnet-20240229
+    verbose: true
+    user_prompt:
+      enabled: true
+      validation_required: true
+      progress_tracking: true
+    react_validation:
+      thought_required: true
+      reasoning_depth: 2
+      action_validation: true
+
+student_models:
+  transformer_tiny:
+    architecture: tiny
+    params: 60M
+    size_mb: 250
+    capabilities:
+      - general_reasoning
+      - code_generation
+    optimization:
+      quantization: int8
+      pruning: magnitude
+      distillation: progressive
+
+  transformer_small:
+    architecture: small
+    params: 250M
+    size_mb: 1000
+    capabilities:
+      - general_reasoning
+      - code_generation
+      - analysis
+    optimization:
+      quantization: float16
+      pruning: structured
+      distillation: vanilla

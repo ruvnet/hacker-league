@@ -1,0 +1,118 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+rule_files:
+  - "rules/*.yml"
+
+scrape_configs:
+  - job_name: 'insider-mirror'
+    static_configs:
+      - targets: ['insider-mirror:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # System monitoring
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+# Alert rules
+rules:
+  - name: insider_mirror_alerts
+    rules:
+      # Data fetching alerts
+      - alert: DataFetchFailure
+        expr: rate(insider_mirror_data_fetch_failures_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Data fetch failures detected"
+          description: "The system is failing to fetch insider trading data"
+
+      # Trading alerts
+      - alert: HighTradeRejectionRate
+        expr: rate(insider_mirror_trade_rejections_total[5m]) / rate(insider_mirror_trade_attempts_total[5m]) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High trade rejection rate"
+          description: "More than 20% of trades are being rejected"
+
+      # System health alerts
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / process_virtual_memory_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 80%"
+
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 80%"
+
+      # API health alerts
+      - alert: APIHighLatency
+        expr: rate(insider_mirror_api_request_duration_seconds_sum[5m]) / rate(insider_mirror_api_request_duration_seconds_count[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency"
+          description: "API requests are taking longer than 1 second on average"
+
+      - alert: APIHighErrorRate
+        expr: rate(insider_mirror_api_request_errors_total[5m]) / rate(insider_mirror_api_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High API error rate"
+          description: "More than 5% of API requests are failing"
+
+      # Portfolio alerts
+      - alert: LargePortfolioDrawdown
+        expr: (insider_mirror_portfolio_peak_value - insider_mirror_portfolio_current_value) / insider_mirror_portfolio_peak_value > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Large portfolio drawdown"
+          description: "Portfolio value has dropped more than 10% from peak"
+
+      # System availability alerts
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service is down"
+          description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute"
