@@ -1,8 +1,0 @@
-# Aider Configuration File
-# Created by coding-admin.sh
-
-test_cmd: python -m pytest
-project_structure: 1
-auto_documentation: true
-dirty_commits: false
-chat_model: google/gemini-pro
